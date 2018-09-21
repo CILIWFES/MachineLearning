@@ -1,6 +1,7 @@
 import datetime
 import random
 from collections import Counter
+import numpy as np
 
 # curPath = os.path.abspath(os.path.dirname(__file__))
 # rootPath = os.path.split(curPath)[0]
@@ -15,13 +16,19 @@ startTime = datetime.datetime.now()  # 起始时间
 
 ###################################################################################################################
 
-a=[0,2,5,4,8]
-a.extend(range(5))
-print(a)
-b=[5,4,7,4,5,5,9]
-# print(list(set(a).difference(set(b))))
-c=Counter(b)
-print(dict(c))
+test1 = "1"
+test2 = "2"
+test3 = "3"
+test4 = "4"
+test5 = "5"
+test6 = "6"
+from Analysis.JudgeClass.JudegeClass import JudegeClass
+
+judege = JudegeClass()
+judege.Judege([test1, test3, test2, test3, test4], [test1, test4, test1, test3, test2])
+judege.printData()
+judege.showFigure()
+
 ###################################################################################################################
 endTime = datetime.datetime.now()  # 终止时间
 

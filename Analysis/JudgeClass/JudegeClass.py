@@ -20,7 +20,6 @@ class JudegeClass:
         self.RECALL = 5  # 查全率
         self.Fb = 6  # 调和平均
         self.dataDict = {}
-
     # B为调和平均测试B,表示查全的权重是查准的B倍(贝塔值>1对查全率影响大,B<1对准确率影响大)
     def Judege(self, predictions, realClass, B=1):
         if len(predictions) is not len(realClass):
@@ -28,6 +27,7 @@ class JudegeClass:
         dic = {}
         for index in range(len(predictions)):
             realName = realClass[index]
+
             preName = predictions[index]
 
             if realName not in dic:
@@ -47,15 +47,16 @@ class JudegeClass:
 
         for k, lst in dic.items():  # 计算假反例
             lst[self.TN] = allCnt - sum(lst)  # 假反例,其他正确预测
-            lst[self.PRECISION] = lst[self.TP] / (float(lst[self.TP] + lst[self.FP]))
-            lst[self.RECALL] = lst[self.TP] / (float(lst[self.TP] + lst[self.FN]))  # 假反例,其他正确预测
-            lst[self.Fb] = (1 + B ** 2) * lst[self.PRECISION] * lst[self.RECALL] / float(
+            lst[self.PRECISION] = 0 if lst[self.TP] + lst[self.FP] == 0 else lst[self.TP] / (
+            float(lst[self.TP] + lst[self.FP]))
+            lst[self.RECALL] = 0 if lst[self.TP] + lst[self.FN] == 0 else lst[self.TP] / (
+            float(lst[self.TP] + lst[self.FN]))  # 假反例,其他正确预测
+            lst[self.Fb] = 0 if lst[self.PRECISION] + lst[self.RECALL] == 0 else (1 + B ** 2) * lst[self.PRECISION] * \
+                                                                                 lst[self.RECALL] / float(
                 B ** 2 * lst[self.PRECISION] + lst[self.RECALL])  # 假反例,其他正确预测
             precisions.append(lst[self.PRECISION])
             recalls.append(lst[self.RECALL])
         self.dataDict = dic
-        self.printData()
-        return self.showFigure(precisions, recalls)
 
     def printData(self):
         table = PrettyTable(["类名", "查准率", "查全率", "调和平均Fb", "测试数量"])
@@ -82,7 +83,13 @@ class JudegeClass:
         print(table)
 
     # 绘制散点图
-    def showFigure(self, precisions, recalls):
+    def showFigure(self):
+        precisions = []
+        recalls = []
+        for k, lst in self.dataDict.items():  # 计算假反例oat(
+            precisions.append(lst[self.PRECISION])
+            recalls.append(lst[self.RECALL])
+
         # 绘图
         fig = plt.figure()
         # 把画布分成1行1列 1x1块,当前画布处于第1块
@@ -93,4 +100,4 @@ class JudegeClass:
         # ax.plot(recalls, precisions, color='r')
         x = np.linspace(0, 1, 100)
         ax.plot(x, x, color='g')
-        return plt
+        plt.show()
