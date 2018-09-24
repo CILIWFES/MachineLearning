@@ -4,15 +4,7 @@ from typing import List
 from collections import Counter
 
 
-class MakeRandomBunch:
-    singleton = None
-
-    @staticmethod
-    def getSingleton():
-        if MakeRandomBunch.singleton is None:
-            MakeRandomBunch.singleton = MakeRandomBunch()
-        return MakeRandomBunch.singleton
-
+class RandomSet:
     # trainSet为二维数组
     # label为一维数组[index=1类别, index=2.类别],
     # Bunch trainSet与trainLabel,testSet与testLabel
