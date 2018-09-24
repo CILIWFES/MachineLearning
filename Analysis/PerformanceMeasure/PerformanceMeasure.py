@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 
 
-class JudegeClass:
+class PerformanceMeasure:
     def __init__(self):
         # +---------------+----------+
         #         | 预测正例 | 预测反例 |
@@ -21,7 +21,7 @@ class JudegeClass:
         self.Fb = 6  # 调和平均
         self.dataDict = {}
     # B为调和平均测试B,表示查全的权重是查准的B倍(贝塔值>1对查全率影响大,B<1对准确率影响大)
-    def Judege(self, predictions, realClass, B=1):
+    def PerformanceMeasure(self, predictions, realClass, B=1):
         if len(predictions) is not len(realClass):
             raise Exception("预测值与实际值长度不一")
         dic = {}

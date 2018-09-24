@@ -1,2 +1,3 @@
 __all__ = ["TreePlotter"]
-from .TreePlotter import *
+from .TreePlotter import TreePlotter
+TreePlotter=TreePlotter()
