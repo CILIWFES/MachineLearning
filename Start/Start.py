@@ -2,6 +2,7 @@ import datetime
 import random
 from collections import Counter
 import numpy as np
+import os
 
 # curPath = os.path.abspath(os.path.dirname(__file__))
 # rootPath = os.path.split(curPath)[0]
@@ -15,19 +16,16 @@ print("""运行开始
 startTime = datetime.datetime.now()  # 起始时间
 
 ###################################################################################################################
+print(os.getcwd())
+print(os.path.abspath(os.path.dirname(__file__)))
 
-test1 = "1"
-test2 = "2"
-test3 = "3"
-test4 = "4"
-test5 = "5"
-test6 = "6"
-from Analysis.JudgeClass.JudegeClass import JudegeClass
+print('***获取上级目录***')
+print(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+print(os.path.abspath(os.path.dirname(os.getcwd())))
+print(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
-judege = JudegeClass()
-judege.Judege([test1, test3, test2, test3, test4], [test1, test4, test1, test3, test2])
-judege.printData()
-judege.showFigure()
+print('***获取上上级目录***')
+print(os.path.abspath(os.path.join(os.getcwd(), "../..")))
 
 ###################################################################################################################
 endTime = datetime.datetime.now()  # 终止时间
