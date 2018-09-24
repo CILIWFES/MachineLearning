@@ -1,2 +1,2 @@
-__all__=['TreePlotter.py']
-from ML.TreePlotter import *
+__all__ = ["TreePlotter"]
+from .TreePlotter import *
