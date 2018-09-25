@@ -1,10 +1,10 @@
 from sklearn.datasets.base import Bunch
 import random
-from typing import List
 from collections import Counter
+from typing import List
 
 
-class RandomSet:
+class ConstructByTrainSet:
     # trainSet为二维数组
     # label为一维数组[index=1类别, index=2.类别],
     # Bunch trainSet与trainLabel,testSet与testLabel
