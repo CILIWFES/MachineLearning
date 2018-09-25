@@ -1,4 +1,4 @@
-__all__ = ['JudegeClass']
-from .PerformanceMeasure import JudegeClass
+__all__ = ['PerM']
+from .PerformanceMeasure import PerformanceMeasure
 
-JudegeClass = JudegeClass()
+PerM = PerformanceMeasure

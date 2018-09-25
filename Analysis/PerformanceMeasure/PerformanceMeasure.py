@@ -1,65 +1,85 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import Counter
 from prettytable import PrettyTable
+from typing import List
 
 
 class PerformanceMeasure:
     def __init__(self):
+
+        # 四舍五入参数
+        self.rounding = "{0:.2f}"
+
         # +---------------+----------+
         #         | 预测正例 | 预测反例 |
         # +---------------+----------+
         # 实际正例| TP(真正例) | FN(假反例) |
         # 实际反例| FP(假正例) | TN(真反例) |
         # +---------------+----------+
-        # 这些是坐标
+
+        # 构建分布图时生成
+        # map{key,索引}
+        self.classIndex = {}
+        # List[key,key]
+        self.classList = {}
+        # 混淆矩阵内部坐标
         self.TP = 0  # 真正例,当前正确预测
         self.FP = 1  # 假正例,当前错误预测
-        self.TN = 2  # 真反例,其他错误预测
-        self.FN = 3  # 假反例,其他正确预测
+        self.FN = 2  # 假反例,其他错误预测
+        self.TN = 3  # 真反例,其他正确预测
         self.PRECISION = 4  # 查准率
         self.RECALL = 5  # 查全率
         self.Fb = 6  # 调和平均
-        self.dataDict = {}
+        # 分布图
+        self.distributionMatrix = None
+        # 混淆矩阵
+        self.confusions = []
+
+    def makeDistributionMatrix(self, predictions: List, realClass: List):
+        allList = predictions + realClass
+        counter = Counter(allList)
+
+        self.classList = [key for key in counter.keys()]
+        self.classIndex = {key: index for index, key in enumerate(self.classList)}
+
+        classIndex = self.classIndex
+        self.distributionMatrix = np.zeros((len(self.classIndex), len(self.classIndex)))
+        for index, pre in enumerate(predictions):
+            preIndex = classIndex[pre]
+            realIndex = classIndex[realClass[index]]
+            self.distributionMatrix[realIndex, preIndex] += 1
+
+    # 构造混淆矩阵
     # B为调和平均测试B,表示查全的权重是查准的B倍(贝塔值>1对查全率影响大,B<1对准确率影响大)
+    def makeconfusions(self, B=1):
+        if self.distributionMatrix is None:
+            raise Exception("请先构造混淆矩阵")
+        for index, name in enumerate(self.classList):
+            TP = self.distributionMatrix[index, index]  # 真正例,当前正确预测
+            FP = np.sum(self.distributionMatrix[index]) - TP  # 假正例,当前错误预测
+            FN = np.sum(self.distributionMatrix[:, index]) - TP  # 假反例,其他错误预测
+            TN = np.sum(self.distributionMatrix) - TP + FP + FN  # 真反例,其他正确预测
+            # 查准率
+            Precision = TP / float(TP + FP) if TP + FP != 0 else 0
+            # 查全率
+            Recall = TP / float(TP + FN) if TP + FN != 0 else 0
+            Fb = (1 + B ** 2) * Precision * Recall / float(
+                B ** 2 * Precision + Recall) if B ** 2 * Precision + Recall != 0 else 0
+            # 请维护顺序
+            self.confusions.append((TP, FP, FN, TN, Precision, Recall, Fb))
+
     def PerformanceMeasure(self, predictions, realClass, B=1):
-        if len(predictions) is not len(realClass):
-            raise Exception("预测值与实际值长度不一")
-        dic = {}
-        for index in range(len(predictions)):
-            realName = realClass[index]
+        if len(realClass) != len(predictions):
+            raise Exception("长度不一致")
+        # 构造分布图
+        self.makeDistributionMatrix(predictions, realClass)
+        # 构造混淆矩阵
+        self.makeconfusions(B)
 
-            preName = predictions[index]
-
-            if realName not in dic:
-                dic[realName] = [0, 0, 0, 0, 0, 0, 0]
-            if preName not in dic:
-                dic[preName] = [0, 0, 0, 0, 0, 0, 0]
-
-            if realName == preName:
-                dic[preName][self.TP] += 1  # 正确,真正例+1
-            elif realName != preName:
-                dic[preName][self.FP] += 1  # 其他错误,假正例
-                dic[realName][self.FN] += 1  # 错误,假反例+1
-
-        allCnt = len(predictions)
-        precisions = []
-        recalls = []
-
-        for k, lst in dic.items():  # 计算假反例
-            lst[self.TN] = allCnt - sum(lst)  # 假反例,其他正确预测
-            lst[self.PRECISION] = 0 if lst[self.TP] + lst[self.FP] == 0 else lst[self.TP] / (
-            float(lst[self.TP] + lst[self.FP]))
-            lst[self.RECALL] = 0 if lst[self.TP] + lst[self.FN] == 0 else lst[self.TP] / (
-            float(lst[self.TP] + lst[self.FN]))  # 假反例,其他正确预测
-            lst[self.Fb] = 0 if lst[self.PRECISION] + lst[self.RECALL] == 0 else (1 + B ** 2) * lst[self.PRECISION] * \
-                                                                                 lst[self.RECALL] / float(
-                B ** 2 * lst[self.PRECISION] + lst[self.RECALL])  # 假反例,其他正确预测
-            precisions.append(lst[self.PRECISION])
-            recalls.append(lst[self.RECALL])
-        self.dataDict = dic
-
-    def printData(self):
-        table = PrettyTable(["类名", "查准率", "查全率", "调和平均Fb", "测试数量"])
+    # 绘制查准率\查全率\调和平均Fb 表格
+    def printPRFData(self):
+        table = PrettyTable(["类名", "查准率", "查全率", "调和Fb", "测试数量"])
 
         table.align["查准率"] = "c"  # 以name字段左对齐
         table.align["查全率"] = "c"  # 以name字段左对齐
@@ -69,26 +89,34 @@ class PerformanceMeasure:
         r_avg = 0
         f_avg = 0
         file_all = 0
-        for k, lst in self.dataDict.items():  # 计算假反例
-            table.add_row([k, "{0:.2f}".format(lst[self.PRECISION]), "{0:.2f}".format(lst[self.RECALL]),
-                           "{0:.2f}".format(lst[self.Fb]), lst[self.TP] + lst[self.FN]])
-            p_avg += lst[self.PRECISION]
-            r_avg += lst[self.RECALL]
-            f_avg += lst[self.Fb]
-            file_all += lst[self.TP] + lst[self.FN]
-        dataLen = len(self.dataDict)
+        confusionLen = len(self.confusions)
+        for index in range(confusionLen):
+            item = self.confusions[index]
+            table.add_row(
+                [self.classList[index], self.rounding.format(item[self.PRECISION]),
+                 self.rounding.format(item[self.RECALL]),
+                 self.rounding.format(item[self.Fb]), item[self.TP] + item[self.FN]])
+            # 计算平均值
+            p_avg += item[self.PRECISION]
+            r_avg += item[self.RECALL]
+            f_avg += item[self.Fb]
+            file_all += item[self.TP] + item[self.FN]
         table.add_row(
-            ["avg", "{0:.3f}".format(p_avg / float(dataLen)), "{0:.3f}".format(r_avg / float(dataLen)),
-             "{0:.3f}".format(f_avg / float(dataLen)), file_all])
+            ["avg", self.rounding.format(p_avg / float(confusionLen)),
+             self.rounding.format(r_avg / float(confusionLen)),
+             self.rounding.format(f_avg / float(confusionLen)), file_all])
         print(table)
 
-    # 绘制散点图
-    def showFigure(self):
+    # 绘制PR散点图
+    # x=查全,y=查准
+    def showPRFigure(self):
         precisions = []
         recalls = []
-        for k, lst in self.dataDict.items():  # 计算假反例oat(
-            precisions.append(lst[self.PRECISION])
-            recalls.append(lst[self.RECALL])
+        confusionLen = len(self.confusions)
+        for index in range(confusionLen):  # 计算假反例oat(
+            item = self.confusions[index]
+            precisions.append(item[self.PRECISION])
+            recalls.append(item[self.RECALL])
 
         # 绘图
         fig = plt.figure()

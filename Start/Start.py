@@ -16,16 +16,20 @@ print("""运行开始
 startTime = datetime.datetime.now()  # 起始时间
 
 ###################################################################################################################
-print(os.getcwd())
-print(os.path.abspath(os.path.dirname(__file__)))
+# print(os.getcwd())
+# print(os.path.abspath(os.path.dirname(__file__)))
+#
+# print('***获取上级目录***')
+# print(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+# print(os.path.abspath(os.path.dirname(os.getcwd())))
+# print(os.path.abspath(os.path.join(os.getcwd(), "..")))
+#
+# print('***获取上上级目录***')
+# print(os.path.abspath(os.path.join(os.getcwd(), "../..")))
 
-print('***获取上级目录***')
-print(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-print(os.path.abspath(os.path.dirname(os.getcwd())))
-print(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
-print('***获取上上级目录***')
-print(os.path.abspath(os.path.join(os.getcwd(), "../..")))
+
+
 
 ###################################################################################################################
 endTime = datetime.datetime.now()  # 终止时间
