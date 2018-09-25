@@ -1,2 +1,2 @@
-__all__ = ['PerM']
+__all__ = ['PerM', "TimeM"]
 from .PerformanceMeasure import *
