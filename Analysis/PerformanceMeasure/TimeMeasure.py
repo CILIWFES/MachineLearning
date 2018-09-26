@@ -47,13 +47,13 @@ class TimeMeasure:
         if len(self.timeList) == 0:
             raise Exception("未调用时间测试")
 
-        table = PrettyTable(["调用次数", "时间平均", "极小值", "极大值", "时间相对差"])
+        table = PrettyTable(["调用次数", "时间平均", "极小值", "极大值", "相对偏移"])
 
         table.align["统计次数"] = "c"  # 以name字段左对齐
         table.align["极大值"] = "c"  # 以name字段左对齐
         table.align["极小值"] = "c"  # 以name字段左对齐
         table.align["时间平均"] = "c"  # 以name字段左对齐
-        table.align["时间标准差"] = "c"  # 以name字段左对齐
+        table.align["相对偏移"] = "c"  # 以name字段左对齐
         table.padding_width = 2  # 填充宽度
 
         timMatrix = np.mat(self.timeList)
