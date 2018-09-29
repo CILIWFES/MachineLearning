@@ -29,6 +29,19 @@ class ORM:
     def readFile(self, classPath, fileName):
         fp = open(classPath + fileName, "rb")
         content = fp.read()
-        content = content.decode(encoding='utf-8')  # 解码为字符码
+        content = content.decode(encoding='utf-8').strip()  # 解码为字符码
         fp.close()
         return content
+        # 读取文件
+
+    #  通过父文件(一级)价自动搜索,二级类别与类别下的文件(三级)
+    # seachPath="xxx/ss/"
+    def autoSearch(self, seachPath):
+        fileinfo=[]
+        cateList = os.listdir(seachPath)
+        for mydir in cateList:
+            classPath = seachPath + mydir + '/'
+            fileList = os.listdir(classPath)
+            for fileName in fileList:
+                fileinfo.append((mydir,fileName))
+        return fileinfo

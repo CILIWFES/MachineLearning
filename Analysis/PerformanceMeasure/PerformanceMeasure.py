@@ -61,19 +61,19 @@ class PerformanceMeasure:
             FN = np.sum(self.distributionMatrix[:, index]) - TP  # 假反例,其他错误预测
             TN = np.sum(self.distributionMatrix) - TP + FP + FN  # 真反例,其他正确预测
             # 查准率
-            Precision = TP / float(TP + FP) if TP + FP != 0 else 0
+            Precision = TP / float(TP + FN) if TP + FN != 0 else 0
             # 查全率
-            Recall = TP / float(TP + FN) if TP + FN != 0 else 0
+            Recall = TP / float(TP + FP) if TP + FP != 0 else 0
             Fb = (1 + B ** 2) * Precision * Recall / float(
                 B ** 2 * Precision + Recall) if B ** 2 * Precision + Recall != 0 else 0
             # 请维护顺序
             self.confusions.append((TP, FP, FN, TN, Precision, Recall, Fb))
 
-    def PerformanceMeasure(self, predictions, realClass, B=1):
-        if len(realClass) != len(predictions):
+    def fit(self, preClass, realClass, B=1):
+        if len(realClass) != len(preClass):
             raise Exception("长度不一致")
         # 构造分布图
-        self.makeDistributionMatrix(predictions, realClass)
+        self.makeDistributionMatrix(preClass, realClass)
         # 构造混淆矩阵
         self.makeconfusions(B)
 

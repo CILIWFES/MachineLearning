@@ -29,4 +29,10 @@ class GlobalConstant:
     ORM_CONFIG_SECTION = "ORM"
     STOPWORDS_CONFIG_SECTION = "StopWords"
 
+    """
+    Segmentation大类(分隔符)
+    """
+    Segmentation_CONFIG_SECTION = "Segmentation"
+    Jieba_Segmentation="jieba"
+
 
