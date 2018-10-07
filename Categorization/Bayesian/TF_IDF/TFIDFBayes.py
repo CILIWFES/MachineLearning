@@ -8,8 +8,8 @@ import sys
 # 朴素贝叶斯
 class NaiveBayes:
 
-    def savePickle(self, path):
-        ORM.writePickle(path, self)
+    def savePickle(self, path, fileName):
+        ORM.writePickle(path, fileName, self)
 
     @staticmethod
     def loadPickle(path):

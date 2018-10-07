@@ -14,7 +14,7 @@ TestJieSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TestSet_Jieba/"
 LoadPah = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/Pickle/"
 FileName = "NaiveBayes.dat"
 # 性能模式
-performanceModel = False
+performanceModel = True
 
 # 获取训练集合
 fileInfo = ORM.autoSearch(TrainSearch)
@@ -49,7 +49,7 @@ else:
     NB.fit(trainSet, classSet)
 
 if performanceModel:
-    NB.savePickle(LoadPah + FileName)
+    NB.savePickle(LoadPah, FileName)
 
 print("开始预测")
 preClass = NB.Prediction(testSet)

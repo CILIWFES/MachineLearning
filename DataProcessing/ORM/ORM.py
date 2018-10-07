@@ -4,8 +4,10 @@ import os
 
 class ORM:
     # 写入对象的序列化
-    def writePickle(self, path, object):
-        fileObj = open(path, "wb")
+    def writePickle(self, path, fileName, object):
+        if not os.path.exists(path):
+            os.makedirs(path)
+        fileObj = open(path + fileName, "wb")
         pickle.dump(object, fileObj)
         fileObj.close()
 
@@ -37,11 +39,11 @@ class ORM:
     #  通过父文件(一级)价自动搜索,二级类别与类别下的文件(三级)
     # seachPath="xxx/ss/"
     def autoSearch(self, seachPath):
-        fileinfo=[]
+        fileinfo = []
         cateList = os.listdir(seachPath)
         for mydir in cateList:
             classPath = seachPath + mydir + '/'
             fileList = os.listdir(classPath)
             for fileName in fileList:
-                fileinfo.append((mydir,fileName))
+                fileinfo.append((mydir, fileName))
         return fileinfo

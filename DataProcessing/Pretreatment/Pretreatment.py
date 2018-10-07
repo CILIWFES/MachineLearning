@@ -29,7 +29,7 @@ class Pretreatment:
         # 保存原始文件
         ORM.saveFile(GLOCT.SUPPORT_PATH + stopFolder, stopFileName, "\n".join(stopSet))
         # 进行序列化
-        ORM.writePickle(GLOCT.SUPPORT_PATH + stopFolder + stopBunchName, stopSet)
+        ORM.writePickle(GLOCT.SUPPORT_PATH + stopFolder, stopBunchName, stopSet)
         return stopSet
 
     # 过滤停用词
@@ -44,12 +44,11 @@ class Pretreatment:
         words = jba.cut(word)
         return words
 
-
     # 先检查分词是否存在,若不存在,自动加载文本分词
     def autoJieba(self, jiebaPath, fileName, fileDir=None):
         jiebaWord: List = None
         # 若已经存在则不创建，直接读取
-        if os.path.exists(jiebaPath+fileName):
+        if os.path.exists(jiebaPath + fileName):
             jiebaWord = ORM.readFile(jiebaPath, fileName).split(
                 GLOCF.getConfig(GLOCT.Segmentation_CONFIG_SECTION, GLOCT.Jieba_Segmentation))
         else:  # 先读取,再分词,再保存,最后返回

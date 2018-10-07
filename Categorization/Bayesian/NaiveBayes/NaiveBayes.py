@@ -9,8 +9,8 @@ from collections import Counter
 # 朴素贝叶斯(词集模型,离散型)
 class NaiveBayes:
 
-    def savePickle(self, path):
-        ORM.writePickle(path, self)
+    def savePickle(self, path, fileName):
+        ORM.writePickle(path, fileName, self)
 
     @staticmethod
     def loadPickle(path):
@@ -49,6 +49,8 @@ class NaiveBayes:
         minInfo = ["", -sys.maxsize]
         for key, bagWords in self.bagWords.items():
             weight = self.classP[key] * np.sum(np.log(np.abs(bagWords + words - 1)))  # P(A/B)正比于P(A)*P(B/A)
+            # 不乘P(A)效果更好,乘P(A)可能是考虑样本不均匀且大样本覆盖面比较广,只有样本显著差异时才可以预测为小样本
+            # weight = np.sum(np.log(np.abs(bagWords + words - 1)))
             if weight > minInfo[1]:
                 minInfo = (key, weight)
         return minInfo[0]
@@ -105,8 +107,7 @@ class NaiveBayes:
             # 无拉普拉斯修正
             # bagWordsTemp = bagWordsTemp / (len(item))  # 除以文件数
             # bagWordsTemp += 0.000000000000001  # 去0
-            # 优化后的拉普拉斯修正
-            bagWordsTemp = ((bagWordsTemp + 0.0000000000001) / (len(item)+2))
-
+            # 优化后的拉普拉斯修正(0.0000000000001)越小精度越高
+            bagWordsTemp = ((bagWordsTemp + 0.0000000000001) / (len(item) + 2))
             bagWords[key] = bagWordsTemp
         return bagWords
