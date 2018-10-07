@@ -68,7 +68,8 @@ class NaiveBayes:
     def categoryIndex(self, classSet):
         classList = list(set(classSet))
         classIndex = {key: index for index, key in enumerate(self.classList)}
-        classP = {key: v / len(classSet) for key, v in dict(Counter(classSet)).items()}
+        # P(A)概率,拉普拉斯修正
+        classP = {key: (v + 1) / (len(classSet) + len(classIndex)) for key, v in dict(Counter(classSet)).items()}
         return classList, classIndex, classP
 
     # 创建字典表
@@ -101,7 +102,11 @@ class NaiveBayes:
             bagWordsTemp = np.zeros((1, len(self.wordIndex)))
             for words in item:
                 bagWordsTemp += words
-            bagWordsTemp = bagWordsTemp / len(item)  # 除以文件数
-            bagWordsTemp = bagWordsTemp + 1 / 1000000000000000  # 补0(词集频率+1/疑问)
+            # 无拉普拉斯修正
+            # bagWordsTemp = bagWordsTemp / (len(item))  # 除以文件数
+            # bagWordsTemp += 0.000000000000001  # 去0
+            # 优化后的拉普拉斯修正
+            bagWordsTemp = ((bagWordsTemp + 0.0000000000001) / (len(item)+2))
+
             bagWords[key] = bagWordsTemp
         return bagWords
