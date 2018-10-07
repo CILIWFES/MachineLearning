@@ -12,4 +12,7 @@ import seaborn as sns
 
 s1 = [i for i in range(10)]
 s2 = [i for i in range(10)]
-print(s1 + s2)
+print(int("01001", 2))
+print(bin(9))
+
+print(9 & 2)
