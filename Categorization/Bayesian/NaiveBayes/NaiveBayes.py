@@ -18,7 +18,7 @@ class NaiveBayes:
 
     def __init__(self):
         # 词集模型,{name:矩阵},每个分类都有自己的词集
-        self.bagWords = {}
+        self.setWords = {}
         # 词名key->词集模型中的index值
         self.wordIndex = {}
         # class
@@ -29,31 +29,16 @@ class NaiveBayes:
 
     # trainSet训练集(list)
     def fit(self, trainSet: List, classSet):
+        # 过滤训练集
         trainSet = [Pretreatment.filterWord(item) for item in trainSet]
+        # 对类型进行归类,并计算概率
         self.classList, self.classIndex, self.classP = self.categoryIndex(classSet)
+        # 建立词集索引
         self.wordIndex = self.buildWordIndex(trainSet)
+        # 构建词集类别-文件词集dict
         classWords = self.buildClassWord(trainSet, classSet)
-        self.bagWords = self.buildBagWord(classWords)
-
-    # 预测多个
-    def Prediction(self, testSet):
-        testSet = [Pretreatment.filterWord(item) for item in testSet]
-        preClass = []
-        for item in testSet:
-            words = self._buildWordDict(item)
-            preClass.append(self._PredictionOne(words))
-        return preClass
-
-    # 预测单个,不能调用
-    def _PredictionOne(self, words):
-        minInfo = ["", -sys.maxsize]
-        for key, bagWords in self.bagWords.items():
-            weight = self.classP[key] * np.sum(np.log(np.abs(bagWords + words - 1)))  # P(A/B)正比于P(A)*P(B/A)
-            # 不乘P(A)效果更好,乘P(A)可能是考虑样本不均匀且大样本覆盖面比较广,只有样本显著差异时才可以预测为小样本
-            # weight = np.sum(np.log(np.abs(bagWords + words - 1)))
-            if weight > minInfo[1]:
-                minInfo = (key, weight)
-        return minInfo[0]
+        # 计算文件预测词集
+        self.setWords = self.buildsetWord(classWords)
 
     # 构建词集name->index坐标索引
     def buildWordIndex(self, trainSet):
@@ -69,7 +54,7 @@ class NaiveBayes:
     # 建立类别索引
     def categoryIndex(self, classSet):
         classList = list(set(classSet))
-        classIndex = {key: index for index, key in enumerate(self.classList)}
+        classIndex = {key: index for index, key in enumerate(classList)}
         # P(A)概率,拉普拉斯修正
         classP = {key: (v + 1) / (len(classSet) + len(classIndex)) for key, v in dict(Counter(classSet)).items()}
         return classList, classIndex, classP
@@ -81,7 +66,7 @@ class NaiveBayes:
         for word in words:
             if word in self.wordIndex:
                 lst[0, self.wordIndex[word]] = 1
-        return lst
+        return lst[0]
 
     # 构建词集模型
     def buildClassWord(self, trainSet, classSet):
@@ -96,18 +81,39 @@ class NaiveBayes:
         return classWords
 
     # 计算核心
-    def buildBagWord(self, classWords: Dict):
+    def buildsetWord(self, classWords: Dict):
         print("正在构建词集")
-        bagWords = {}
+        setWords = {}
         for key, item in classWords.items():
             print("构建词集:", key)
-            bagWordsTemp = np.zeros((1, len(self.wordIndex)))
+            setWordsTemp = np.zeros((1, len(self.wordIndex)))
             for words in item:
-                bagWordsTemp += words
+                setWordsTemp += words
             # 无拉普拉斯修正
-            # bagWordsTemp = bagWordsTemp / (len(item))  # 除以文件数
-            # bagWordsTemp += 0.000000000000001  # 去0
+            # setWordsTemp = setWordsTemp / (len(item))  # 除以文件数
+            # setWordsTemp += 0.000000000000001  # 去0
             # 优化后的拉普拉斯修正(0.0000000000001)越小精度越高
-            bagWordsTemp = ((bagWordsTemp + 0.0000000000001) / (len(item) + 2))
-            bagWords[key] = bagWordsTemp
-        return bagWords
+            setWordsTemp = ((setWordsTemp + 0.0000000000001) / (len(item) + 2))
+            setWords[key] = setWordsTemp
+        return setWords
+        # 预测
+
+    def Prediction(self, testSet):
+        testSet = [Pretreatment.filterWord(item) for item in testSet]
+        preClass = []
+        for item in testSet:
+            words = self._buildWordDict(item)
+            preClass.append(self._PredictionOne(words))
+        return preClass
+
+        # 预测单个,不能调用
+
+    def _PredictionOne(self, words):
+        minInfo = ["", -sys.maxsize]
+        for key, setWords in self.setWords.items():
+            weight = self.classP[key] * np.sum(np.log(np.abs(setWords + words - 1)))  # P(A/B)正比于P(A)*P(B/A)
+            # 不乘P(A)效果更好,乘P(A)可能是考虑样本不均匀且大样本覆盖面比较广,只有样本显著差异时才可以预测为小样本
+            # weight = np.sum(np.log(np.abs(setWords + words - 1)))
+            if weight > minInfo[1]:
+                minInfo = (key, weight)
+        return minInfo[0]
