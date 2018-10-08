@@ -48,9 +48,9 @@ class Multinomial_NB:
         for word in words:
             if word in self.wordIndex:
                 # # 词集
-                lst[0, self.wordIndex[word]] = 1
-                # 词袋(效率更高)
-                # lst[0, self.wordIndex[word]] += 1
+                # lst[0, self.wordIndex[word]] = 1
+                # 词袋(准确度更高)
+                lst[0, self.wordIndex[word]] += 1
         return lst[0]
 
     # 构建词集name->index坐标索引
