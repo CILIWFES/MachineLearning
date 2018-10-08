@@ -6,7 +6,7 @@ import numpy as np
 from collections import Counter
 
 
-# 多项式贝叶斯
+# 多项式(离散型)贝叶斯
 class Multinomial_NB:
     def savePickle(self, path, fileName):
         ORM.writePickle(path, fileName, self)

@@ -52,8 +52,8 @@ if performanceModel:
     NB.savePickle(LoadPah, FileName)
 
 print("开始预测")
-preClass = NB.Prediction(trainSet)
+preClass = NB.Prediction(testSet)
 
 perM = PerM()
-perM.fit(preClass, classSet)
+perM.fit(preClass, realClass)
 perM.printPRFData()
