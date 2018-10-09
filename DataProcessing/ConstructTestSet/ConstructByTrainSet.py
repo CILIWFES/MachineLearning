@@ -26,15 +26,14 @@ class ConstructByTrainSet:
     def _crossValidation(self, trainSet, classSet, times) -> List[Bunch]:
         rets = []
         timesTemp = 0
-        countDict = dict(Counter(classSet))
         while times > timesTemp:
             testIndexs = []
             trainIndexs = []
-            for k, cnt in countDict.items():
+            for k in set(classSet):
                 # 获取所有时是lable属性的坐标
                 trains = [indx for indx, label in enumerate(classSet) if label == k]
                 # 测试集合抽取随机(cnt/times)个
-                tests = random.sample(trains, int(cnt / times))
+                tests = random.sample(trains, int(len(trains) / times))
                 testIndexs.extend(tests)
                 # 生成样本集合
                 trainIndexs.extend(list(set(trains).difference(set(tests))))
@@ -50,12 +49,11 @@ class ConstructByTrainSet:
     def _bootstrapping(self, trainSet, classSet) -> Bunch:
         times = 0
         trainIndexs = []
-        testIndexs = []
         while (times < len(classSet)):
-            randIndex = random.randint(0, len(classSet) - 1)
+            randIndex = random.randint(0, len(trainSet) - 1)
             trainIndexs.append(randIndex)
             times += 1
-        testIndexs = list(set(range(len(classSet))).difference(set(trainIndexs)))
+        testIndexs = list(set(range(len(trainSet))).difference(set(trainIndexs)))
 
         bunch = Bunch(trainSet=[trainSet[indx] for indx in trainIndexs],
                       trainClass=[classSet[indx] for indx in trainIndexs],
@@ -67,16 +65,15 @@ class ConstructByTrainSet:
     def _holdOutModel(self, trainSet, classSet, times) -> List[Bunch]:
         rets = []
         timesTemp = 0
-        countDict = dict(Counter(classSet))
         while times > timesTemp:
             testIndexs = []
             trainIndexs = []
-            for k, cnt in countDict.items():
+            for k in set(classSet):
                 # 获取所有时是lable属性的坐标
                 trains = [indx for indx, label in enumerate(classSet) if label == k]
 
                 # 测试集合抽取param*timesTemp~param*(timesTemp+1)个
-                param = int(cnt / times)
+                param = int(len(trains) / times)
                 testIndexs.extend([trains[indx] for indx in range(timesTemp * param, timesTemp * param + param)])
                 # 生成样本集合
                 trainIndexs.extend(list(set(trains).difference(set(testIndexs))))

@@ -6,13 +6,13 @@ import os
 
 print("运行开始")
 
+print("运行开始")
+
 TrainSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet/"
 TrainJieSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet_Jieba/"
 
-LoadPah = GLOCT.ROOT_PATH + "FileSupport/Bayes/TFIDFBayes/Pickle/"
-FileName = "TFIDF.dat"
-# 性能模式
-performanceModel = True
+LoadPah = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/Pickle/"
+FileName = "NaiveBayes.dat"
 
 # 获取训练集合
 fileInfo = ORM.autoSearch(TrainSearch)
@@ -23,28 +23,45 @@ for info in fileInfo:
     fileName = info[1]
     classSet.append(dir)
     trainSet.append(Pretreatment.autoJieba(TrainJieSearch + dir + "\\", fileName, TrainSearch + dir + "\\"))
+    # 去除停用词
+trainSet = [Pretreatment.filterWord(item) for item in trainSet]
 
-# 获取训练集合
-fileInfo = ORM.autoSearch(TestSearch)
+# 获取训练集合(不能用自助法)
+Bunchs = CBTS.makeSet(trainSet, classSet, "h", 10)
+
+print("完成加载,开始执行")
+# 性能模式(线上模式开启)
+performanceModel = False
+
+preClass = []
 realClass = []
-testSet = []
-print("完成加载")
-NB = None
-if performanceModel:
-    if os.path.exists(LoadPah + FileName):
-        NB = TFIDF.loadPickle(LoadPah + FileName)
+
+
+def start(Bunch):
+    NB = None
+    if performanceModel:
+        if os.path.exists(LoadPah + FileName):
+            NB = TFIDF.loadPickle(LoadPah + FileName)
+        else:
+            NB = TFIDF()
+            NB.fit(Bunch.trainSet, Bunch.trainClass)
     else:
         NB = TFIDF()
-        NB.fit(trainSet, classSet)
-else:
-    NB = TFIDF()
-    NB.fit(trainSet, classSet)
+        NB.fit(Bunch.trainSet, Bunch.trainClass)
 
-if performanceModel:
-    NB.savePickle(LoadPah, FileName)
+    if performanceModel:
+        NB.savePickle(LoadPah, FileName)
 
-print("开始预测")
-preClass = NB.Prediction(testSet)
+    print("开始预测")
+    preClass = NB.Prediction(Bunch.testSet)
+    return preClass, Bunch.testClass
+
+
+for times, bunch in enumerate(Bunchs):
+    print("第", times + 1, "次")
+    preClassTemp, realClassTemp = start(bunch)
+    preClass.extend(preClassTemp)
+    realClass.extend(realClassTemp)
 
 perM = PerM()
 perM.fit(preClass, realClass)

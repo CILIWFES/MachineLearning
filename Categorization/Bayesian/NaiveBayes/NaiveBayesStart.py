@@ -56,7 +56,7 @@ def start(Bunch):
 
 
 for times, bunch in enumerate(Bunchs):
-    print("第", times+1, "次")
+    print("第", times + 1, "次")
     preClassTemp, realClassTemp = start(bunch)
     preClass.extend(preClassTemp)
     realClass.extend(realClassTemp)
