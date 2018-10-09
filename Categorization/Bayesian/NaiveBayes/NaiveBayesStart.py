@@ -6,10 +6,10 @@ import os
 
 print("运行开始")
 
-TrainSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet/"
-TrainJieSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet_Jieba/"
+TrainSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet/"
+TrainJieSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet_Jieba/"
 
-LoadPah = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/Pickle/"
+LoadPah = GLOCT.SUPPORT_PATH + "TextCategorization/Pickle/"
 FileName = "NaiveBayes.dat"
 
 # 获取训练集合

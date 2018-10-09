@@ -6,11 +6,13 @@ import os
 
 print("运行开始")
 
+print("运行开始")
+
 TrainSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet/"
 TrainJieSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet_Jieba/"
 
-LoadPah = GLOCT.SUPPORT_PATH + "TextCategorization/Pickle/"
-FileName = "NaiveBayes.dat"
+LoadPah = GLOCT.ROOT_PATH + "FileSupport/KNN/KNNClassifier/Pickle/"
+FileName = "KNNClassifier.dat"
 
 # 获取训练集合
 fileInfo = ORM.autoSearch(TrainSearch)
