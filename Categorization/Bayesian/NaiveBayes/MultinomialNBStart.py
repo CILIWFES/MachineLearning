@@ -7,9 +7,7 @@ import os
 print("运行开始")
 
 TrainSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet/"
-TestSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TestSet/"
 TrainJieSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TrainSet_Jieba/"
-TestJieSearch = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/TestSet_Jieba/"
 
 LoadPah = GLOCT.ROOT_PATH + "FileSupport/Bayes/NaiveBayes/Pickle/"
 FileName = "MNB.dat"

@@ -1,5 +1,4 @@
 import numpy as np
-from DataProcessing.Pretreatment import *
 from typing import List, Dict
 from DataProcessing.ORM import *
 import sys
@@ -29,8 +28,6 @@ class NaiveBayes:
 
     # trainSet训练集(list)
     def fit(self, trainSet: List, classSet):
-        # 过滤训练集
-        trainSet = [Pretreatment.filterWord(item) for item in trainSet]
         # 对类型进行归类,并计算概率
         self.classList, self.classIndex, self.classP = self.categoryIndex(classSet)
         # 建立词集索引
@@ -85,7 +82,6 @@ class NaiveBayes:
         print("正在构建词集")
         setWords = {}
         for key, item in classWords.items():
-            print("构建词集:", key)
             setWordsTemp = np.zeros((1, len(self.wordIndex)))
             for words in item:
                 setWordsTemp += words
@@ -93,13 +89,12 @@ class NaiveBayes:
             # setWordsTemp = setWordsTemp / (len(item))  # 除以文件数
             # setWordsTemp += 0.000000000000001  # 去0
             # 优化后的拉普拉斯修正(0.0000000000001)越小精度越高
-            setWordsTemp = ((setWordsTemp + 0.0000000000001) / (len(item) + 2))
+            setWordsTemp = (setWordsTemp / len(item))
             setWords[key] = setWordsTemp
         return setWords
         # 预测
 
     def Prediction(self, testSet):
-        testSet = [Pretreatment.filterWord(item) for item in testSet]
         preClass = []
         for item in testSet:
             words = self._buildWordDict(item)
@@ -111,7 +106,8 @@ class NaiveBayes:
     def _PredictionOne(self, words):
         minInfo = ["", -sys.maxsize]
         for key, setWords in self.setWords.items():
-            weight = self.classP[key] * np.sum(np.log(np.abs(setWords + words - 1)))  # P(A/B)正比于P(A)*P(B/A)
+            weight = self.classP[key] * np.sum(
+                np.log(np.abs(setWords + words - 1.0).clip(min=1/sys.maxsize)))  # P(A/B)正比于P(A)*P(B/A)
             # 不乘P(A)效果更好,乘P(A)可能是考虑样本不均匀且大样本覆盖面比较广,只有样本显著差异时才可以预测为小样本
             # weight = np.sum(np.log(np.abs(setWords + words - 1)))
             if weight > minInfo[1]:
