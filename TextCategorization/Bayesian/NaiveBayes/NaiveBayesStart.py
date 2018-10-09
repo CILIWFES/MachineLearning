@@ -1,4 +1,4 @@
-from Categorization.Bayesian.NaiveBayes import *
+from TextCategorization.Bayesian.NaiveBayes import *
 from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *

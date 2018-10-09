@@ -26,8 +26,6 @@ class TFIDF:
 
     # trainSet训练集(list)
     def fit(self, trainSet: List, classSet):
-        # 过滤训练集
-        trainSet = [Pretreatment.filterWord(item) for item in trainSet]
         # 对类型进行归类,并计算概率
         self.classList, self.classIndex = self.categoryIndex(classSet)
         # 建立词袋索引
@@ -133,7 +131,6 @@ class TFIDF:
 
     # 预测
     def Prediction(self, testSet):
-        testSet = [Pretreatment.filterWord(item) for item in testSet]
         preClass = []
         for item in testSet:
             words = self._buildWordDict(item)

@@ -1,4 +1,4 @@
-from Categorization.Bayesian.TF_IDF import *
+from TextCategorization.Bayesian.NaiveBayes import MNB
 from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
@@ -31,20 +31,22 @@ print("完成加载,开始执行")
 # 性能模式(线上模式开启)
 performanceModel = False
 
+
+
+
 preClass = []
 realClass = []
-
 
 def start(Bunch):
     NB = None
     if performanceModel:
         if os.path.exists(LoadPah + FileName):
-            NB = TFIDF.loadPickle(LoadPah + FileName)
+            NB = MNB.loadPickle(LoadPah + FileName)
         else:
-            NB = TFIDF()
+            NB = MNB()
             NB.fit(Bunch.trainSet, Bunch.trainClass)
     else:
-        NB = TFIDF()
+        NB = MNB()
         NB.fit(Bunch.trainSet, Bunch.trainClass)
 
     if performanceModel:

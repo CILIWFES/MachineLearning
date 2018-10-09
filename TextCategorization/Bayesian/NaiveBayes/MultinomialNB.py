@@ -23,8 +23,6 @@ class Multinomial_NB:
         self.classP = None
 
     def fit(self, trainSet: List, classSet):
-        # 过滤训练集
-        trainSet = [Pretreatment.filterWord(item) for item in trainSet]
         # 建立词典索引
         self.wordIndex = self.buildWordIndex(trainSet)
         # 构建 词袋/词集
@@ -65,8 +63,6 @@ class Multinomial_NB:
         return wordIndex
 
     def Prediction(self, testSet: List):
-        # 预测分类结果
-        testSet = [Pretreatment.filterWord(item) for item in testSet]
         for index in range(len(testSet)):
             testSet[index] = self._buildWordDict(testSet[index])
         preClass = self.MBN.predict(testSet)
