@@ -4,6 +4,7 @@ from Global import *
 from Analysis.PerformanceMeasure import *
 import os
 
+mPoint = MPoint()
 print("运行开始")
 
 TrainSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet/"
@@ -37,31 +38,31 @@ realClass = []
 
 def start(Bunch):
     NB = None
-    if performanceModel:
-        if os.path.exists(LoadPah + FileName):
-            NB = KNN.loadPickle(LoadPah + FileName)
-        else:
-            NB = KNN()
-            NB.fit(Bunch.trainSet, Bunch.trainClass)
+    if performanceModel and os.path.exists(LoadPah + FileName):
+        NB = KNN.loadPickle(LoadPah + FileName)
     else:
+        mPoint.set_Time_RAM_Point()
         NB = KNN()
-        NB.fit(Bunch.trainSet, Bunch.trainClass)
+        NB.fit(Bunch.trainSet, Bunch.trainClass)  # [words1,words2,.........,words3],[class1,class2,......,classn]
+        mPoint.show_Time_RAM_Point("构建KNN")
 
     if performanceModel:
         NB.savePickle(LoadPah, FileName)
 
     print("开始预测")
-    preClass = NB.Prediction(Bunch.testSet, 5)
+    k = len(set(Bunch.trainClass))
+    mPoint.set_Time_RAM_Point()
+    preClass = NB.Prediction(Bunch.testSet, k + k / 2)  # [words1,words1,.........,words1]
+    mPoint.show_Time_RAM_Point("预测KNN")
     return preClass, Bunch.testClass
 
 
 for times, bunch in enumerate(Bunchs):
     print("第", times + 1, "次")
-    preClassTemp, realClassTemp = start(bunch)
+    preClassTemp, realClassTemp = start(bunch)  # [preclass1,preclass2,......,preclassn],[class1,class2,......,classn]
     preClass.extend(preClassTemp)
     realClass.extend(realClassTemp)
     break
-
 perM = PerM()
 perM.fit(preClass, realClass)
 perM.printPRFData()

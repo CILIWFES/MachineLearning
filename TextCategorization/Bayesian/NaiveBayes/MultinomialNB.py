@@ -1,6 +1,5 @@
 from sklearn.naive_bayes import MultinomialNB
 from typing import List
-from DataProcessing.Pretreatment import *
 from DataProcessing.ORM import *
 import numpy as np
 from collections import Counter

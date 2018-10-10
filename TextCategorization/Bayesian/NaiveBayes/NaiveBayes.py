@@ -79,7 +79,6 @@ class NaiveBayes:
 
     # 计算核心
     def buildsetWord(self, classWords: Dict):
-        print("正在构建词集")
         setWords = {}
         for key, item in classWords.items():
             setWordsTemp = np.zeros((1, len(self.wordIndex)))

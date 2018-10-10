@@ -6,6 +6,7 @@ import math
 import sys
 
 
+# 默认KNN
 class KNNClassifier:
     def savePickle(self, path, fileName):
         ORM.writePickle(path, fileName, self)
@@ -76,16 +77,16 @@ class KNNClassifier:
         for item in testSet:
             words = self._buildWordDict(item)
             words = words / np.sum(words)
-            preClass.append(self._PredictionOne(words, cnt))
+            sizeTest = math.sqrt(np.sum(np.power(words, 2)))
+            preClass.append(self._PredictionOne(words, sizeTest, cnt))
         return preClass
 
     # 预测单个,不能调用
-    def _PredictionOne(self, wordsTest, cnt):
+    def _PredictionOne(self, wordsTest, sizeTest, cnt):
         # 最小值列表(从小到大)
         preClass = [("", -sys.maxsize)]
-        size = math.sqrt(np.sum(np.power(wordsTest, 2)))
-        for [key, words, size2] in self.calculate:
-            weight = self._calculate(wordsTest, size, words, size2)
+        for [key, wordsTrain, sizeTrain] in self.calculate:
+            weight = self._calculate(wordsTest, sizeTest, wordsTrain, sizeTrain)
             preClass = self.insertPreClass(preClass, weight, key, cnt)
         counter = Counter([key for (key, v) in preClass])
 
@@ -104,6 +105,101 @@ class KNNClassifier:
                     preClass.insert(index, (key, weight))
         return preClass
 
+    def _calculate(self, wordsTest, sizeTest, wordsTrain, sizeTrain):
+        inner = np.sum(np.multiply(wordsTest, wordsTrain))
+        return self._Cos(inner, sizeTest, sizeTrain)
+
     # 夹角余弦
-    def _calculate(self, words1, size1, words2, size2):
-        return np.sum(np.multiply(words1, words2)) / (size1 * size2)
+    def _Cos(self, inner, module1, module2):
+        return inner / (module1 * module2)
+
+    # 闵科夫斯基距离
+    def _MinkowskiDistance(self, plot1, plot2, powerNumber: int):
+        sum = np.abs(np.power(plot1 - plot2, powerNumber)).sum()
+        distance = math.pow(sum, 1.0 / powerNumber)
+        return distance
+
+    # 欧式距离(没效果)
+    def _EuclideanDistance(self, plot1, plot2):
+        return self._MinkowskiDistance(plot1, plot2, 2)
+
+    # 曼哈顿距离(没效果)
+    def _ManhattonDistance(self, plot1, plot2):
+        return self._MinkowskiDistance(plot1, plot2, 1)
+
+
+## 优化训练集合,大大提高空间效率,预测效率与KNN_TrainTime一致(训练效率远低于KNN_TrainTime)
+class KNN_RAM(KNNClassifier):
+
+    # 构建计算核心
+    def buildCalculateWord(self, trainSet, classSet):
+        trainClassSet = []
+        for index, item in enumerate(classSet):
+            wordTemp = trainSet[index]
+            word = self._buildWordDict(wordTemp)
+            word = word / np.sum(word)
+            # key值,词频,向量的模
+            trainClassSet.append([item, self._OptimizationWords(word), math.sqrt(np.sum(np.power(word, 2)))])
+        return trainClassSet
+
+    # 夹角余弦
+    def _calculate(self, wordsTest, sizeTest, calcuteTrain, sizeTrain):
+        sum = 0
+        for (index, cnt) in calcuteTrain:
+            sum += wordsTest[index] * cnt
+        return sum / (sizeTest * sizeTrain)
+
+    def _OptimizationWords(self, words):
+        lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
+        return lst
+
+
+# 优化测试集合,预测效率与KNN_RAM一样,训练效率远高于KNN_RAM(线上懒惰模式,动态训练场景适用,若是静态训练不如KNN_RAM)
+class KNN_TrainTime(KNNClassifier):
+
+    # 预测
+    def Prediction(self, testSet, cnt):
+        preClass = []
+        for item in testSet:
+            words = self._buildWordDict(item)
+            words = words / np.sum(words)
+            sizeTest = math.sqrt(np.sum(np.power(words, 2)))
+            calculateWords = self._OptimizationWords(words)
+            preClass.append(self._PredictionOne(calculateWords, sizeTest, cnt))
+        return preClass
+
+    # 夹角余弦
+    def _calculate(self, calcuteTest, sizeTest, wordsTrain, sizeTrain):
+        sum = 0
+        for (index, cnt) in calcuteTest:
+            sum += wordsTrain[index] * cnt
+        return sum / (sizeTest * sizeTrain)
+
+    def _OptimizationWords(self, words):
+        lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
+        return lst
+
+
+# 以类别来分类(没有效果)
+class KNNClassifier_Class(KNNClassifier):
+
+    # 构建计算核心
+    def buildCalculateWord(self, trainSet, classSet):
+        trainClassSet = []
+        classCalculateWord = {}
+        # 归类
+        for index, item in enumerate(classSet):
+            wordTemp = trainSet[index]
+            word = self._buildWordDict(wordTemp)
+            word = word / np.sum(word)
+            if classSet[index] in trainClassSet:
+                classCalculateWord[classSet[index]].append(word)
+            else:
+                classCalculateWord[classSet[index]] = [word]
+        # 以类来评估
+        for key, item in classCalculateWord.items():
+            itemMatrix = np.mat(item)
+            itemMatrix = itemMatrix / np.sum(itemMatrix)
+            # key值,词频,向量的模
+            trainClassSet.append([key, itemMatrix[0], math.sqrt(np.sum(np.power(itemMatrix, 2)))])
+        return trainClassSet
