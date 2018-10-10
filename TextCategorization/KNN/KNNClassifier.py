@@ -29,10 +29,8 @@ class KNNClassifier:
         self.classList, self.classIndex = self.categoryIndex(classSet)
         # 建立词袋索引
         self.wordIndex = self.buildWordIndex(trainSet)
-        # 构建词袋类别-文件词袋dict
-        trainClassSet = self.buildClassWord(trainSet, classSet)
-        # 计算文件预测词袋
-        self.tf = self.buildTfIdfWord(trainClassSet)
+        # 构建计算核心
+        self.calculate = self.buildCalculateWord(trainSet, classSet)
 
     # 构建词袋name->index坐标索引
     def buildWordIndex(self, trainSet):
@@ -61,19 +59,15 @@ class KNNClassifier:
                 lst[0, self.wordIndex[word]] += 1
         return lst[0]
 
-    # 构建词袋模型
-    def buildClassWord(self, trainSet, classSet):
+    # 构建计算核心
+    def buildCalculateWord(self, trainSet, classSet):
         trainClassSet = []
         for index, item in enumerate(classSet):
             wordTemp = trainSet[index]
             word = self._buildWordDict(wordTemp)
-            trainClassSet.append([item, word])
-
-        return trainClassSet
-
-    # 计算核心
-    def buildTfIdfWord(self, trainClassSet: List[List]):
-        print("正在构建TF")
+            word = word / np.sum(word)
+            # key值,词频,向量的模
+            trainClassSet.append([item, word, math.sqrt(np.sum(np.power(word, 2)))])
         return trainClassSet
 
     # 预测
@@ -81,6 +75,7 @@ class KNNClassifier:
         preClass = []
         for item in testSet:
             words = self._buildWordDict(item)
+            words = words / np.sum(words)
             preClass.append(self._PredictionOne(words, cnt))
         return preClass
 
@@ -88,11 +83,11 @@ class KNNClassifier:
     def _PredictionOne(self, wordsTest, cnt):
         # 最小值列表(从小到大)
         preClass = [("", -sys.maxsize)]
-        i = 0
-        for [key, words] in self.tf:
-            weight = self._calculate(wordsTest, words)
+        size = math.sqrt(np.sum(np.power(wordsTest, 2)))
+        for [key, words, size2] in self.calculate:
+            weight = self._calculate(wordsTest, size, words, size2)
             preClass = self.insertPreClass(preClass, weight, key, cnt)
-        counter = Counter([key for [key, v] in preClass])
+        counter = Counter([key for (key, v) in preClass])
 
         return counter.most_common().pop(0)[0]  # 返回频率最高的类别
 
@@ -106,10 +101,9 @@ class KNNClassifier:
                 if len(preClass) == cnt:
                     preClass[index] = [key, weight]
                 else:
-                    preClass.insert(index, [key, weight])
+                    preClass.insert(index, (key, weight))
         return preClass
 
     # 夹角余弦
-    def _calculate(self, words1, words2):
-        return np.sum(np.multiply(words1, words2)) / (
-                math.sqrt(np.sum(np.power(words1, 2))) * math.sqrt(np.sum(np.power(words2, 2))))
+    def _calculate(self, words1, size1, words2, size2):
+        return np.sum(np.multiply(words1, words2)) / (size1 * size2)
