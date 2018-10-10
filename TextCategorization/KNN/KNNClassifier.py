@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Tuple
 from collections import Counter
 from DataProcessing.ORM import *
-
+import math
 import sys
 
 
@@ -87,7 +87,7 @@ class KNNClassifier:
     # 预测单个,不能调用
     def _PredictionOne(self, wordsTest, cnt):
         # 最小值列表(从小到大)
-        preClass = [("", sys.maxsize)]
+        preClass = [("", -sys.maxsize)]
         i = 0
         for [key, words] in self.tf:
             weight = self._calculate(wordsTest, words)
@@ -97,12 +97,12 @@ class KNNClassifier:
         return counter.most_common().pop(0)[0]  # 返回频率最高的类别
 
     def insertPreClass(self, preClass: List, weight, key, cnt):
-        if weight >= preClass[-1][1]:
+        if weight <= preClass[-1][1]:
             return preClass
 
         for index in range(len(preClass)):
             item = preClass[index]
-            if item[1] >= weight:
+            if item[1] <= weight:
                 if len(preClass) == cnt:
                     preClass[index] = [key, weight]
                 else:
@@ -111,4 +111,5 @@ class KNNClassifier:
 
     # 夹角余弦
     def _calculate(self, words1, words2):
-        return np.sum(words1 * words2.T) / (np.sqrt(np.sum(words1.T * words1)) * np.sqrt(np.sum(words2.T * words2)))
+        return np.sum(np.multiply(words1, words2)) / (
+                math.sqrt(np.sum(np.power(words1, 2))) * math.sqrt(np.sum(np.power(words2, 2))))
