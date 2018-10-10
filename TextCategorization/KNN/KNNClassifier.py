@@ -128,7 +128,12 @@ class KNNClassifier:
         return self._MinkowskiDistance(plot1, plot2, 1)
 
 
-## 优化训练集合,大大提高空间效率,预测效率与KNN_TrainTime一致(训练效率远低于KNN_TrainTime)
+"""
+*****************************************************************************************************
+"""
+
+
+# 优化训练集合,大大提高空间效率,预测效率与KNN_TrainTime一致(训练效率远低于KNN_TrainTime)
 class KNN_RAM(KNNClassifier):
 
     # 构建计算核心
@@ -152,6 +157,11 @@ class KNN_RAM(KNNClassifier):
     def _OptimizationWords(self, words):
         lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
         return lst
+
+
+"""
+*****************************************************************************************************
+"""
 
 
 # 优化测试集合,预测效率与KNN_RAM一样,训练效率远高于KNN_RAM(线上懒惰模式,动态训练场景适用,若是静态训练不如KNN_RAM)
@@ -178,6 +188,11 @@ class KNN_TrainTime(KNNClassifier):
     def _OptimizationWords(self, words):
         lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
         return lst
+
+
+"""
+*****************************************************************************************************
+"""
 
 
 # 以类别来分类(没有效果)
