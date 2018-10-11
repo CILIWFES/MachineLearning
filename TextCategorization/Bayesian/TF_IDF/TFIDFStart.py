@@ -3,10 +3,6 @@ from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
 import os
-from time import clock
-
-mPoint = MPoint()
-
 print("运行开始")
 
 TrainSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet/"
@@ -14,7 +10,6 @@ TrainJieSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet_Jieba/"
 
 LoadPah = GLOCT.SUPPORT_PATH + "TextCategorization/Pickle/"
 FileName = "NaiveBayes.dat"
-
 # 获取训练集合
 fileInfo = ORM.autoSearch(TrainSearch)
 classSet = []
@@ -43,17 +38,17 @@ def start(Bunch):
     if performanceModel and os.path.exists(LoadPah + FileName):
         NB = TFIDF.loadPickle(LoadPah + FileName)
     else:
-        mPoint.set_Time_RAM_Point()
+        MPoint.setPoint()
         NB = TFIDF()
         NB.fit(Bunch.trainSet, Bunch.trainClass)  # [words1,words2,.........,words3],[class1,class2,......,classn]
-        mPoint.show_Time_RAM_Point("构建TFIDF")
+        MPoint.showPoint("构建TFIDF")
 
     if performanceModel:
         NB.savePickle(LoadPah, FileName)
 
-    mPoint.set_Time_RAM_Point()
+    MPoint.setPoint()
     preClass = NB.Prediction(Bunch.testSet)  # [words1,words1,.........,words1]
-    mPoint.show_Time_RAM_Point("预测")
+    MPoint.showPoint("预测")
     return preClass, Bunch.testClass
 
 

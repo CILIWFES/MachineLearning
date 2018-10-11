@@ -24,7 +24,7 @@ class TimeMeasure:
 时间测试开始
 -------------------------------------------------------------------------------------\n""")
         while times > 0:
-            lastTimes = time.clock()
+            lastTimes = time.clock()  # 程序运行的实际时间
             self.testFunction()
             durTime = time.clock()
             times -= 1

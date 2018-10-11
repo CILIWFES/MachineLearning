@@ -3,9 +3,6 @@ from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
 import os
-from time import clock
-
-mPoint = MPoint()
 
 print("运行开始")
 
@@ -43,17 +40,17 @@ def start(Bunch):
     if performanceModel and os.path.exists(LoadPah + FileName):
         NB = MNB.loadPickle(LoadPah + FileName)
     else:
-        mPoint.set_Time_RAM_Point()
+        MPoint.setPoint()
         NB = MNB()
         NB.fit(Bunch.trainSet, Bunch.trainClass)  # [words1,words2,.........,words3],[class1,class2,......,classn]
-        mPoint.show_Time_RAM_Point("构建贝叶斯")
+        MPoint.showPoint("构建贝叶斯")
 
     if performanceModel:
         NB.savePickle(LoadPah, FileName)
 
-    mPoint.set_Time_RAM_Point()
+    MPoint.setPoint()
     preClass = NB.Prediction(Bunch.testSet)  # [words1,words1,.........,words1]
-    mPoint.show_Time_RAM_Point("预测")
+    MPoint.showPoint("预测")
     return preClass, Bunch.testClass
 
 

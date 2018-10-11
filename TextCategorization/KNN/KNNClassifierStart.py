@@ -4,7 +4,6 @@ from Global import *
 from Analysis.PerformanceMeasure import *
 import os
 
-mPoint = MPoint()
 print("运行开始")
 
 TrainSearch = GLOCT.SUPPORT_PATH + "TextCategorization/TrainSet/"
@@ -41,19 +40,19 @@ def start(Bunch):
     if performanceModel and os.path.exists(LoadPah + FileName):
         NB = KNN.loadPickle(LoadPah + FileName)
     else:
-        mPoint.set_Time_RAM_Point()
+        MPoint.setPoint()
         NB = KNN()
         NB.fit(Bunch.trainSet, Bunch.trainClass)  # [words1,words2,.........,words3],[class1,class2,......,classn]
-        mPoint.show_Time_RAM_Point("构建KNN")
+        MPoint.showPoint("构建KNN")
 
     if performanceModel:
         NB.savePickle(LoadPah, FileName)
 
     print("开始预测")
     k = len(set(Bunch.trainClass))
-    mPoint.set_Time_RAM_Point()
+    MPoint.setPoint()
     preClass = NB.Prediction(Bunch.testSet, k + k / 2)  # [words1,words1,.........,words1]
-    mPoint.show_Time_RAM_Point("预测KNN")
+    MPoint.showPoint("预测KNN")
     return preClass, Bunch.testClass
 
 

@@ -3,6 +3,6 @@ from .PerformanceMeasure import PerformanceMeasure
 from .TimeMeasure import TimeMeasure
 from .MeasurePoint import MeasurePoint
 
-MPoint = MeasurePoint
+MPoint = MeasurePoint()
 TimeM = TimeMeasure
 PerM = PerformanceMeasure

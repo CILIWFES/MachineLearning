@@ -16,7 +16,7 @@ class MeasurePoint:
         self.inital_Time_Occupy = None
         self.RAMThread = None
 
-    def setRAMPoint(self):
+    def _setRAMPoint(self):
         gc.collect()
         if self.RAMThread is None:
             self.RAMThread = RAMThread()
@@ -24,23 +24,24 @@ class MeasurePoint:
         else:
             raise Exception('标记已经存在')
 
-    def setTimePoint(self):
+    def _setTimePoint(self):
         if self.inital_Time_Occupy is None:
             self.inital_Time_Occupy = time.clock()
         else:
             raise Exception('标记已经存在')
 
-    def showRAMPoint(self, message="", defaultMsg=" 占用内存:"):
+    def _showRAMPoint(self, message="", defaultMsg=" 占用内存:"):
         if self.RAMThread is None:
             raise Exception('RAM标记不存在')
         program_RAM_Occupy = self.RAMThread.getRAM()
         print(message + defaultMsg, program_RAM_Occupy / 1000, "KB/", program_RAM_Occupy / 1000 / 1000, "MB/",
               program_RAM_Occupy / 1000 / 1000 / 1000,
               "GB")
+        del self.RAMThread
         self.RAMThread = None
         gc.collect()
 
-    def showTimePoint(self, message="", defaultMsg=" 占用时间:"):
+    def _showTimePoint(self, message="", defaultMsg=" 占用时间:"):
         if self.inital_Time_Occupy is None:
             raise Exception('Time标记不存在')
         now_Time_Occupy = time.clock()
@@ -48,19 +49,19 @@ class MeasurePoint:
         print(message + defaultMsg, program_Time_Occupy, "秒")
         self.inital_Time_Occupy = None
 
-    def set_Time_RAM_Point(self, isTime=False):
+    def setPoint(self, isTime=False):
         if isTime:
-            self.setTimePoint()
+            self._setTimePoint()
         else:
-            self.setRAMPoint()
-            self.setTimePoint()
+            self._setRAMPoint()
+            self._setTimePoint()
 
-    def show_Time_RAM_Point(self, message="", isTime=False, defaultTime=" 占用时间:", defaultRAM=" 占用内存:"):
+    def showPoint(self, message="", isTime=False, defaultTime=" 占用时间:", defaultRAM=" 占用内存:"):
         if isTime:
-            self.showTimePoint(message, defaultTime)
+            self._showTimePoint(message, defaultTime)
         else:
-            self.showTimePoint(message, " 评估时间:")
-            self.showRAMPoint(message, defaultRAM)
+            self._showTimePoint(message, " 评估时间:")
+            self._showRAMPoint(message, defaultRAM)
 
 
 # 定时收集内存信息

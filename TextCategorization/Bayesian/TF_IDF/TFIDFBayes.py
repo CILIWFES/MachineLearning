@@ -73,14 +73,6 @@ class TFIDF:
                 classWords[item] = [word]
         return classWords
 
-    def TF(self, classWords):
-        TFClass = {}
-        for key, item in classWords.items():
-            words = np.sum(np.mat(item), axis=0)
-            words = (words + 1 / np.sum(words)) / np.sum(words)
-            TFClass[key] = words
-        return TFClass
-
     def IDF(self, classWords):
         setWords = {}
         IDFClass = {}
@@ -116,13 +108,21 @@ class TFIDF:
         # 综合2
         return np.multiply(np.log((fileCnt / AllSetWords)), np.log((len(self.classList) / ClassSetWords)))
 
+    def TF(self, classWords):
+        TFClass = classWords
+        for key, item in classWords.items():
+            words = np.sum(np.mat(item), axis=0)
+            words = (words + 1 / np.sum(words)) / np.sum(words)
+            TFClass[key] = words
+        return TFClass
+
     # 计算核心
     def buildTfIdfWord(self, classWords: Dict):
         print("正在构建TFIDF")
         TfIdf = {}
 
-        tf = self.TF(classWords)
         idf = self.IDF(classWords)
+        tf = self.TF(classWords)
         for key, item in tf.items():
             # TfIdf[key] = np.multiply(item, idf[key])
             TfIdf[key] = np.multiply(item, idf)
