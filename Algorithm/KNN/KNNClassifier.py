@@ -27,13 +27,13 @@ class KNNClassifier:
         self.classIndex = {}
 
     # trainSet训练集(list)
-    def fit(self, trainSet: List, classSet):
+    def fit(self, trainSet: List, trainClass):
         # 对类型进行归类,并计算概率
-        self.classList, self.classIndex = self._BuildCategoryIndex(classSet)
+        self.classList, self.classIndex = self._BuildCategoryIndex(trainClass)
         # 建立特征袋索引
         self.featureIndex = self._BuildFeatureIndex(trainSet)
         # 构建计算核心
-        self.calculateModel = self._BuildCalculateModel(trainSet, classSet)
+        self.calculateModel = self._BuildCalculateModel(trainSet, trainClass)
 
     # 构建特征袋name->index坐标索引
     def _BuildFeatureIndex(self, trainSet):
@@ -47,8 +47,8 @@ class KNNClassifier:
         return featureIndex
 
     # 建立类别索引
-    def _BuildCategoryIndex(self, classSet):
-        classList = list(set(classSet))
+    def _BuildCategoryIndex(self, trainClass):
+        classList = list(set(trainClass))
         classIndex = {key: index for index, key in enumerate(classList)}
         # P(A)概率,拉普拉斯修正
         return classList, classIndex
@@ -63,9 +63,9 @@ class KNNClassifier:
         return lst[0]
 
     # 构建计算核心
-    def _BuildCalculateModel(self, trainSet, classSet):
+    def _BuildCalculateModel(self, trainSet, trainClass):
         trainClassSet = []
-        for index, item in enumerate(classSet):
+        for index, item in enumerate(trainClass):
             featureTemp = trainSet[index]
             feature = self._BuildFeatureDict(featureTemp)
             feature = feature / np.sum(feature)
@@ -139,9 +139,9 @@ class KNNClassifier:
 class KNN_RAM(KNNClassifier):
 
     # 构建计算核心
-    def _BuildCalculateModel(self, trainSet, classSet):
+    def _BuildCalculateModel(self, trainSet, trainClass):
         trainClassSet = []
-        for index, item in enumerate(classSet):
+        for index, item in enumerate(trainClass):
             featureTemp = trainSet[index]
             feature = self._BuildFeatureDict(featureTemp)
             feature = feature / np.sum(feature)
@@ -170,7 +170,8 @@ class KNN_RAM(KNNClassifier):
 class KNN_TrainTime(KNNClassifier):
 
     # 预测
-    def Prediction(self, testSet, cnt):
+    def Prediction(self, testSet, **key):
+        cnt = key['cnt']
         preClass = []
         for item in testSet:
             features = self._BuildFeatureDict(item)
@@ -201,18 +202,18 @@ class KNN_TrainTime(KNNClassifier):
 class KNNClassifier_Class(KNNClassifier):
 
     # 构建计算核心
-    def buildCalculateFeature(self, trainSet, classSet):
+    def buildCalculateFeature(self, trainSet, trainClass):
         trainClassSet = []
         classCalculateFeature = {}
         # 归类
-        for index, item in enumerate(classSet):
+        for index, item in enumerate(trainClass):
             featureTemp = trainSet[index]
             feature = self._BuildFeatureDict(featureTemp)
             feature = feature / np.sum(feature)
-            if classSet[index] in trainClassSet:
-                classCalculateFeature[classSet[index]].append(feature)
+            if trainClass[index] in trainClassSet:
+                classCalculateFeature[trainClass[index]].append(feature)
             else:
-                classCalculateFeature[classSet[index]] = [feature]
+                classCalculateFeature[trainClass[index]] = [feature]
         # 以类来评估
         for key, item in classCalculateFeature.items():
             itemMatrix = np.mat(item)

@@ -24,19 +24,19 @@ class TFIDF:
         self.classIndex = {}
 
     # trainSet训练集(list)
-    def fit(self, trainSet: List, classSet):
+    def fit(self, trainSet: List, trainClass):
         # 对类型进行归类,并计算概率
-        self.classList, self.classIndex = self._BuildCategoryIndex(classSet)
+        self.classList, self.classIndex = self._BuildCategoryIndex(trainClass)
         # 建立特征袋索引
         self.featureIndex = self._BuildFeatureIndex(trainSet)
         # 构建特征袋类别-文件特征袋dict
-        classFeatures = self._BuildClassFeature(trainSet, classSet)
+        classFeatures = self._BuildClassFeature(trainSet, trainClass)
         # 计算文件预测特征袋
         self.TfIdf = self._BuildTfIdfFeature(classFeatures)
 
     # 建立类别索引
-    def _BuildCategoryIndex(self, classSet):
-        classList = list(set(classSet))
+    def _BuildCategoryIndex(self, trainClass):
+        classList = list(set(trainClass))
         classIndex = {key: index for index, key in enumerate(classList)}
         return classList, classIndex
 
@@ -61,9 +61,9 @@ class TFIDF:
         return lst[0]
 
     # 构建特征袋模型
-    def _BuildClassFeature(self, trainSet, classSet):
+    def _BuildClassFeature(self, trainSet, trainClass):
         classFeatures = {}
-        for index, item in enumerate(classSet):
+        for index, item in enumerate(trainClass):
             featureTemp = trainSet[index]
             feature = self._BuildFeatureDict(featureTemp)
             if item in classFeatures:

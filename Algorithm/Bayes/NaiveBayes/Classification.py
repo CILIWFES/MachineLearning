@@ -27,22 +27,22 @@ class Classification:
         self.classIndex = {}
 
     # trainSet训练集(list)
-    def fit(self, trainSet: List, classSet):
+    def fit(self, trainSet: List, trainClass):
         # 对类型进行归类,并计算概率
-        self.classList, self.classIndex, self.classP = self._BuildCategoryIndex(classSet)
+        self.classList, self.classIndex, self.classP = self._BuildCategoryIndex(trainClass)
         # 建立特征集索引
         self.featuresIndex = self._BuildFeatureIndex(trainSet)
         # 构建特征集类别-文件特征集dict
-        classFeatures = self._BuildClassFeature(trainSet, classSet)
+        classFeatures = self._BuildClassFeature(trainSet, trainClass)
         # 计算文件预测特征集
         self.calculateModel = self._BuildCalCulteFeature(classFeatures)
 
     # 建立类别索引
-    def _BuildCategoryIndex(self, classSet):
-        classList = list(set(classSet))
+    def _BuildCategoryIndex(self, trainClass):
+        classList = list(set(trainClass))
         classIndex = {key: index for index, key in enumerate(classList)}
         # P(A)概率,拉普拉斯修正
-        classP = {key: (v + 1) / (len(classSet) + len(classIndex)) for key, v in dict(Counter(classSet)).items()}
+        classP = {key: (v + 1) / (len(trainClass) + len(classIndex)) for key, v in dict(Counter(trainClass)).items()}
         return classList, classIndex, classP
 
     # 建立特征集索引
@@ -57,9 +57,9 @@ class Classification:
         return FeatureIndex
 
     # 构建类别-特征集模型
-    def _BuildClassFeature(self, trainSet, classSet):
+    def _BuildClassFeature(self, trainSet, trainClass):
         classFeatures = {}
-        for index, item in enumerate(classSet):
+        for index, item in enumerate(trainClass):
             FeatureTemp = trainSet[index]
             Feature = self._MakeFeature(FeatureTemp)
             if item in classFeatures:

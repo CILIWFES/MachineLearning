@@ -21,12 +21,12 @@ class Classification:
         self.MBN: MultinomialNB
 
     # trainSet训练集(list)
-    def fit(self, trainSet: List, classSet):
+    def fit(self, trainSet: List, trainClass):
         # 建立特征集索引
         self.FeaturesIndex = self._BuildFeatureIndex(trainSet)
 
         trainSet = [self._MakeFeature(item, True) for item in trainSet]
-        self.MBN = MultinomialNB(alpha=0.001).fit(trainSet, classSet)
+        self.MBN = MultinomialNB(alpha=0.001).fit(trainSet, trainClass)
 
     # 建立特征集索引
     def _BuildFeatureIndex(self, trainSet):
