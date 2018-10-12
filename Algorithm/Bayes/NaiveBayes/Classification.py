@@ -6,7 +6,7 @@ from collections import Counter
 
 
 # 朴素贝叶斯(事件集模型,离散型)
-class NaiveBayes:
+class Classification:
 
     def savePickle(self, path, fileName):
         ORM.writePickle(path, fileName, self)
@@ -100,8 +100,7 @@ class NaiveBayes:
             preClass.append(self._toPrediction(Events))
         return preClass
 
-        # 预测单个,不能调用
-
+    # 预测单个,不能调用
     def _toPrediction(self, Events):
         minInfo = ["", -sys.maxsize]
         for key, setEvents in self.calculateModel.items():

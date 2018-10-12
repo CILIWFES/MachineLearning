@@ -43,6 +43,7 @@ def start(Bunch):
         NB.fit(Bunch.trainSet, Bunch.trainClass)  # [words1,words2,.........,words3],[class1,class2,......,classn]
         MPoint.showPoint("构建TFIDF")
 
+
     if performanceModel:
         NB.savePickle(LoadPah, FileName)
 
