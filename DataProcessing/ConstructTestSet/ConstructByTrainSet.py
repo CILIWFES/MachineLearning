@@ -8,7 +8,7 @@ class ConstructByTrainSet:
     # trainSet为二维数组
     # label为一维数组[index=1类别, index=2.类别],
     # Bunch trainSet与trainClass,testSet与testClass
-    # c:交叉验证法,b:自助法,h:留出法
+    # c:交叉验证法,b:自助法,h:留出法,test:测试是否有效
     def makeSet(self, trainSet, trainClass, model, times=None) -> Bunch:
         if len(trainSet) != len(trainClass):
             raise Exception("训练集个数与目标不一致")
@@ -20,6 +20,9 @@ class ConstructByTrainSet:
             ret = self._bootstrapping(trainSet, trainClass)
         elif model == "h":
             ret = self._holdOutModel(trainSet, trainClass, times)
+        elif model == "test":
+            ret = self._testValidation(trainSet, trainClass, times)
+
         return ret
 
     # 交叉验证法
@@ -82,4 +85,24 @@ class ConstructByTrainSet:
                               testSet=[trainSet[indx] for indx in testIndexs],
                               testClass=[trainClass[indx] for indx in testIndexs]))
             timesTemp += 1
+        return rets
+
+    # 放回抽样,验证分类算法是否有效
+    def _testValidation(self, trainSet, trainClass, times) -> List[Bunch]:
+        rets = []
+        timesTemp = 0
+        while times > timesTemp:
+            testIndexs = []
+            for k in set(trainClass):
+                # 获取所有时是lable属性的坐标
+                trains = [indx for indx, label in enumerate(trainClass) if label == k]
+                # 测试集合抽取随机(cnt/times)个
+                tests = random.sample(trains, int(len(trains) / times))
+                testIndexs.extend(tests)
+            timesTemp += 1
+            # 生成样本集合
+            rets.append(Bunch(trainSet=trainSet,
+                              trainClass=trainClass,
+                              testSet=[trainSet[indx] for indx in testIndexs],
+                              testClass=[trainClass[indx] for indx in testIndexs]))
         return rets

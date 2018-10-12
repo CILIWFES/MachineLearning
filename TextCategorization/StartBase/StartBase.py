@@ -9,7 +9,7 @@ class TextCategorization:
     TrainJieSearch = GLOCT.SUPPORT_PATH + "TextCategorization/trainSet_Jieba/"
     LoadPah = GLOCT.SUPPORT_PATH + "TextCategorization/Pickle/"
 
-    def __init__(self, fileName="temp.dat", bunchSize=10):
+    def __init__(self, fileName="temp.dat", bunchSize=10, cbts="h"):
         self.fileName = fileName
         self.fileInfo = ORM.autoSearch(TextCategorization.TrainSearch)
         self.trainSet = []
@@ -23,8 +23,9 @@ class TextCategorization:
                                                    TextCategorization.TrainSearch + dir + "\\"))
         # 去除停用词
         trainSet = [Pretreatment.filterWord(item) for item in trainSet]
+
         # 获取训练集合(不能用自助法)
-        self.bunchs = CBTS.makeSet(trainSet, self.trainClass, "h", bunchSize)
+        self.bunchs = CBTS.makeSet(trainSet, self.trainClass, cbts, bunchSize)
 
     def _Classification(self, bunch, Classification, performanceModel=False, **key):
         classification = None
