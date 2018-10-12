@@ -1,4 +1,4 @@
-from TextCategorization.Bayesian.NaiveBayes import *
+from Algorithm.Bayes import *
 from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
@@ -39,7 +39,7 @@ realClass = []
 def start(Bunch):
     NB = None
     if performanceModel and os.path.exists(LoadPah + FileName):
-        NB = NaiveBayes.loadPickle(LoadPah + FileName)
+        NB = NaiveBayes.LoadPickle(LoadPah + FileName)
     else:
         MPoint.setPoint()
         NB = NaiveBayes()
@@ -47,7 +47,7 @@ def start(Bunch):
         MPoint.showPoint("构建朴素贝叶斯")
 
     if performanceModel:
-        NB.savePickle(LoadPah, FileName)
+        NB.SavePickle(LoadPah, FileName)
 
     MPoint.setPoint()
     preClass = NB.Prediction(Bunch.testSet)  # [words1,words1,.........,words1]

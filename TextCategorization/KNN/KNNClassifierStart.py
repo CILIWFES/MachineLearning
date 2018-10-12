@@ -1,4 +1,4 @@
-from TextCategorization.KNN import *
+from Algorithm.KNN import *
 from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
@@ -38,7 +38,7 @@ realClass = []
 def start(Bunch):
     NB = None
     if performanceModel and os.path.exists(LoadPah + FileName):
-        NB = KNN.loadPickle(LoadPah + FileName)
+        NB = KNN.LoadPickle(LoadPah + FileName)
     else:
         MPoint.setPoint()
         NB = KNN()
@@ -46,7 +46,7 @@ def start(Bunch):
         MPoint.showPoint("构建KNN")
 
     if performanceModel:
-        NB.savePickle(LoadPah, FileName)
+        NB.SavePickle(LoadPah, FileName)
 
     print("开始预测")
     k = len(set(Bunch.trainClass))

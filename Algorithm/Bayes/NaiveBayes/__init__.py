@@ -1,6 +1,6 @@
-__all__ = ['Classification.py', 'MultinomialNB']
-from .Classification import NaiveBayesClassification
-from .MultinomialNB import Multinomial_NB
+__all__ = ["NaiveBayes", "TFIDF"]
+from .Classification import Classification
+from .TFIDFClassification import TFIDF
 
-MNB = Multinomial_NB
-NaiveBayes = NaiveBayesClassification
+NaiveBayes = Classification
+TFIDF = TFIDF

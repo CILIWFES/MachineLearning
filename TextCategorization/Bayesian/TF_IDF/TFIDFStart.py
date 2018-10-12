@@ -1,4 +1,4 @@
-from TextCategorization.Bayesian.TF_IDF import *
+from Algorithm.Bayes.NaiveBayes import *
 from DataProcessing import *
 from Global import *
 from Analysis.PerformanceMeasure import *
@@ -36,7 +36,7 @@ realClass = []
 def start(Bunch):
     NB = None
     if performanceModel and os.path.exists(LoadPah + FileName):
-        NB = TFIDF.loadPickle(LoadPah + FileName)
+        NB = TFIDF.LoadPickle(LoadPah + FileName)
     else:
         MPoint.setPoint()
         NB = TFIDF()
@@ -45,7 +45,7 @@ def start(Bunch):
 
 
     if performanceModel:
-        NB.savePickle(LoadPah, FileName)
+        NB.SavePickle(LoadPah, FileName)
 
     MPoint.setPoint()
     preClass = NB.Prediction(Bunch.testSet)  # [words1,words1,.........,words1]

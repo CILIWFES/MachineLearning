@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple
+from typing import List
 from collections import Counter
 from DataProcessing.ORM import *
 import math
@@ -8,18 +8,20 @@ import sys
 
 # 默认KNN
 class KNNClassifier:
-    def savePickle(self, path, fileName):
+    def SavePickle(self, path, fileName):
         ORM.writePickle(path, fileName, self)
 
     @staticmethod
-    def loadPickle(path):
-        return ORM.loadPickle(path)
+    def LoadPickle(path):
+        return ORM.LoadPickle(path)
 
     def __init__(self):
-        # 词袋模型,{name:矩阵},每个分类都有自己的词袋
-        self.tf = {}
-        # 词名key->词袋模型中的index值
-        self.wordIndex = {}
+        # 特征频率
+        self.frequency = {}
+        # 计算核心
+        self.calculateModel = None
+        # 特征名索引
+        self.featureIndex = {}
         # 类别概率
         self.classList = []
         self.classIndex = {}
@@ -27,66 +29,66 @@ class KNNClassifier:
     # trainSet训练集(list)
     def fit(self, trainSet: List, classSet):
         # 对类型进行归类,并计算概率
-        self.classList, self.classIndex = self.categoryIndex(classSet)
-        # 建立词袋索引
-        self.wordIndex = self.buildWordIndex(trainSet)
+        self.classList, self.classIndex = self._BuildCategoryIndex(classSet)
+        # 建立特征袋索引
+        self.featureIndex = self._BuildFeatureIndex(trainSet)
         # 构建计算核心
-        self.calculate = self.buildCalculateWord(trainSet, classSet)
+        self.calculateModel = self._BuildCalculateModel(trainSet, classSet)
 
-    # 构建词袋name->index坐标索引
-    def buildWordIndex(self, trainSet):
+    # 构建特征袋name->index坐标索引
+    def _BuildFeatureIndex(self, trainSet):
         setTemp = set()
         avgFile = 0
         for item in trainSet:
             avgFile += len(item)
             itemSet = set(item)
             setTemp.update(itemSet)
-        wordIndex = {name: index for index, name in enumerate(setTemp)}
-        return wordIndex
+        featureIndex = {name: index for index, name in enumerate(setTemp)}
+        return featureIndex
 
     # 建立类别索引
-    def categoryIndex(self, classSet):
+    def _BuildCategoryIndex(self, classSet):
         classList = list(set(classSet))
         classIndex = {key: index for index, key in enumerate(classList)}
         # P(A)概率,拉普拉斯修正
         return classList, classIndex
 
     # 创建字典表
-    def _buildWordDict(self, words: List):
-        # 新建初始长度为词典表的矩阵
-        lst = np.zeros((1, len(self.wordIndex)))
-        for word in words:
-            if word in self.wordIndex:
-                lst[0, self.wordIndex[word]] += 1
+    def _BuildFeatureDict(self, features: List):
+        # 新建初始长度为特征典表的矩阵
+        lst = np.zeros((1, len(self.featureIndex)))
+        for feature in features:
+            if feature in self.featureIndex:
+                lst[0, self.featureIndex[feature]] += 1
         return lst[0]
 
     # 构建计算核心
-    def buildCalculateWord(self, trainSet, classSet):
+    def _BuildCalculateModel(self, trainSet, classSet):
         trainClassSet = []
         for index, item in enumerate(classSet):
-            wordTemp = trainSet[index]
-            word = self._buildWordDict(wordTemp)
-            word = word / np.sum(word)
-            # key值,词频,向量的模
-            trainClassSet.append([item, word, math.sqrt(np.sum(np.power(word, 2)))])
+            featureTemp = trainSet[index]
+            feature = self._BuildFeatureDict(featureTemp)
+            feature = feature / np.sum(feature)
+            # key值,特征频,向量的模
+            trainClassSet.append([item, feature, math.sqrt(np.sum(np.power(feature, 2)))])
         return trainClassSet
 
     # 预测
     def Prediction(self, testSet, cnt):
         preClass = []
         for item in testSet:
-            words = self._buildWordDict(item)
-            words = words / np.sum(words)
-            sizeTest = math.sqrt(np.sum(np.power(words, 2)))
-            preClass.append(self._PredictionOne(words, sizeTest, cnt))
+            features = self._BuildFeatureDict(item)
+            features = features / np.sum(features)
+            sizeTest = math.sqrt(np.sum(np.power(features, 2)))
+            preClass.append(self._PredictionOne(features, sizeTest, cnt))
         return preClass
 
     # 预测单个,不能调用
-    def _PredictionOne(self, wordsTest, sizeTest, cnt):
+    def _PredictionOne(self, featuresTest, sizeTest, cnt):
         # 最小值列表(从小到大)
         preClass = [("", -sys.maxsize)]
-        for [key, wordsTrain, sizeTrain] in self.calculate:
-            weight = self._calculate(wordsTest, sizeTest, wordsTrain, sizeTrain)
+        for [key, featuresTrain, sizeTrain] in self.calculateModel:
+            weight = self._calculate(featuresTest, sizeTest, featuresTrain, sizeTrain)
             preClass = self.insertPreClass(preClass, weight, key, cnt)
         counter = Counter([key for (key, v) in preClass])
 
@@ -105,8 +107,8 @@ class KNNClassifier:
                     preClass.insert(index, (key, weight))
         return preClass
 
-    def _calculate(self, wordsTest, sizeTest, wordsTrain, sizeTrain):
-        inner = np.sum(np.multiply(wordsTest, wordsTrain))
+    def _calculate(self, featuresTest, sizeTest, featuresTrain, sizeTrain):
+        inner = np.sum(np.multiply(featuresTest, featuresTrain))
         return self._Cos(inner, sizeTest, sizeTrain)
 
     # 夹角余弦
@@ -137,25 +139,25 @@ class KNNClassifier:
 class KNN_RAM(KNNClassifier):
 
     # 构建计算核心
-    def buildCalculateWord(self, trainSet, classSet):
+    def _BuildCalculateModel(self, trainSet, classSet):
         trainClassSet = []
         for index, item in enumerate(classSet):
-            wordTemp = trainSet[index]
-            word = self._buildWordDict(wordTemp)
-            word = word / np.sum(word)
-            # key值,词频,向量的模
-            trainClassSet.append([item, self._OptimizationWords(word), math.sqrt(np.sum(np.power(word, 2)))])
+            featureTemp = trainSet[index]
+            feature = self._BuildFeatureDict(featureTemp)
+            feature = feature / np.sum(feature)
+            # key值,特征频,向量的模
+            trainClassSet.append([item, self._OptimizationFeatures(feature), math.sqrt(np.sum(np.power(feature, 2)))])
         return trainClassSet
 
     # 夹角余弦
-    def _calculate(self, wordsTest, sizeTest, calcuteTrain, sizeTrain):
+    def _calculate(self, featuresTest, sizeTest, calcuteTrain, sizeTrain):
         sum = 0
         for (index, cnt) in calcuteTrain:
-            sum += wordsTest[index] * cnt
+            sum += featuresTest[index] * cnt
         return sum / (sizeTest * sizeTrain)
 
-    def _OptimizationWords(self, words):
-        lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
+    def _OptimizationFeatures(self, features):
+        lst = [(index, cnt) for index, cnt in enumerate(features) if cnt > 0]
         return lst
 
 
@@ -171,22 +173,22 @@ class KNN_TrainTime(KNNClassifier):
     def Prediction(self, testSet, cnt):
         preClass = []
         for item in testSet:
-            words = self._buildWordDict(item)
-            words = words / np.sum(words)
-            sizeTest = math.sqrt(np.sum(np.power(words, 2)))
-            calculateWords = self._OptimizationWords(words)
-            preClass.append(self._PredictionOne(calculateWords, sizeTest, cnt))
+            features = self._BuildFeatureDict(item)
+            features = features / np.sum(features)
+            sizeTest = math.sqrt(np.sum(np.power(features, 2)))
+            calculateFeatures = self._OptimizationFeatures(features)
+            preClass.append(self._PredictionOne(calculateFeatures, sizeTest, cnt))
         return preClass
 
     # 夹角余弦
-    def _calculate(self, calcuteTest, sizeTest, wordsTrain, sizeTrain):
+    def _calculate(self, calcuteTest, sizeTest, featuresTrain, sizeTrain):
         sum = 0
         for (index, cnt) in calcuteTest:
-            sum += wordsTrain[index] * cnt
+            sum += featuresTrain[index] * cnt
         return sum / (sizeTest * sizeTrain)
 
-    def _OptimizationWords(self, words):
-        lst = [(index, cnt) for index, cnt in enumerate(words) if cnt > 0]
+    def _OptimizationFeatures(self, features):
+        lst = [(index, cnt) for index, cnt in enumerate(features) if cnt > 0]
         return lst
 
 
@@ -199,22 +201,22 @@ class KNN_TrainTime(KNNClassifier):
 class KNNClassifier_Class(KNNClassifier):
 
     # 构建计算核心
-    def buildCalculateWord(self, trainSet, classSet):
+    def buildCalculateFeature(self, trainSet, classSet):
         trainClassSet = []
-        classCalculateWord = {}
+        classCalculateFeature = {}
         # 归类
         for index, item in enumerate(classSet):
-            wordTemp = trainSet[index]
-            word = self._buildWordDict(wordTemp)
-            word = word / np.sum(word)
+            featureTemp = trainSet[index]
+            feature = self._BuildFeatureDict(featureTemp)
+            feature = feature / np.sum(feature)
             if classSet[index] in trainClassSet:
-                classCalculateWord[classSet[index]].append(word)
+                classCalculateFeature[classSet[index]].append(feature)
             else:
-                classCalculateWord[classSet[index]] = [word]
+                classCalculateFeature[classSet[index]] = [feature]
         # 以类来评估
-        for key, item in classCalculateWord.items():
+        for key, item in classCalculateFeature.items():
             itemMatrix = np.mat(item)
             itemMatrix = itemMatrix / np.sum(itemMatrix)
-            # key值,词频,向量的模
+            # key值,特征频,向量的模
             trainClassSet.append([key, itemMatrix[0], math.sqrt(np.sum(np.power(itemMatrix, 2)))])
         return trainClassSet

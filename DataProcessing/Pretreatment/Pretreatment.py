@@ -18,7 +18,7 @@ class Pretreatment:
 
         # 若已经存在则不创建，直接读取
         if os.path.exists(GLOCT.SUPPORT_PATH + stopFolder + stopBunchName):
-            return ORM.loadPickle(GLOCT.SUPPORT_PATH + stopFolder + stopBunchName)
+            return ORM.LoadPickle(GLOCT.SUPPORT_PATH + stopFolder + stopBunchName)
         # 先处理一下
         stopFileName = GLOCF.getConfig(GLOCT.STOPWORDS_CONFIG_SECTION, GLOCT.SAVE_FILENAME_CONFIG)
         stopList = ORM.readFile(GLOCT.SUPPORT_PATH + stopFolder, stopFileName).replace(" ", "").splitlines()

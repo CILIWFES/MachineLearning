@@ -12,7 +12,7 @@ class ORM:
         fileObj.close()
 
     # 读取对象的序列化
-    def loadPickle(self, path):
+    def LoadPickle(self, path):
         fileObj = open(path, "rb")
         object = pickle.load(fileObj)
         fileObj.close()
