@@ -1,27 +1,63 @@
 from DataStructure.Tree.Base import *
 
 
-class BinaryTree(TreeBase):
-    # 在节点后面插入新节点
-    def _InserNode(self, node: TreeNode, key=None, value=None):
-        newNode = self._CreatNode(node.befor, key, value, node.next)
-        if node.next is not None:
-            node.next.befor = newNode
-        node.next = newNode
-        return node
+class BinaryNode(TreeNode):
+    def __init__(self, befor=None, key=None, value=None, left=None, right=None, siblings=None):
+        super().__init__(self, befor, key, value, None, siblings)
+        del self.next
+        self.left = left
+        self.right = right
 
+    def getNext(self, isLeft):
+        if isLeft:
+            return self.left
+        else:
+            return self.right
+
+    def getSiblings(self):
+        if self.befor == None:
+            return None
+        else:
+            befor = self.befor
+            return befor.right if befor.left == self else befor.left
+
+
+class BinaryTree(TreeBase):
+    # 在节点 左/右 插入新节点插入节点与子节点的位置(子节点插入addLeft中)
+    def _InsertNode(self, node: BinaryNode, isLeft, addLeft, key=None, value=None):
+        newNode: BinaryNode
+
+        if addLeft is True:
+            newNode = self._CreatNode(node, key, value, node.left)
+        else:
+            newNode = self._CreatNode(node, key, value, node.right)
+
+        # 调整子节点
+        if isLeft:
+            if node.left is not None:
+                node.left.befor = newNode
+            node.left = newNode
+        else:
+            if node.right is not None:
+                node.right.befor = newNode
+            node.right = newNode
+
+        return newNode
+
+    # 不清楚应用场景(具体类型具体实现)
     def _DeleteNode(self, node: TreeNode):
-        if node.next is not None:
-            node.next.befor = node.befor
-        node.befor.next = node.next
+        pass
 
     def _UpdateNode(self, node: TreeNode, key=None, value=None):
-        node.key = key
-        node.value = value
+        if key is not None:
+            node.key = key
 
-    def _CreatNode(self, befor: TreeNode = None, key=None, value=None, next: TreeNode = None)->TreeNode:
-        return super()._CreatNode(befor, key, value, next, None)
+        if value is not None:
+            node.value = value
 
-    # 交换
-    def _ExchangeNode(self, node1: TreeNode, node2: TreeNode):
-        node1.befor, node1.next, node2.befor, node2.next = node2.befor, node2.next, node1.befor, node1.next
+    def _CreatNode(self, befor: BinaryNode = None, key=None, value=None, left=None, right=None) -> TreeNode:
+        return BinaryNode(befor, key, value, left, right)
+
+    # 交换节点(交换本身与子节点,不能交换空节点,切头)
+    def _ExchangeNode(self, node1: BinaryNode, node2: BinaryNode):
+        node1.befor, node2.befor = node2.befor, node1.befor

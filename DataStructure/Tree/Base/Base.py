@@ -16,13 +16,13 @@ class TreeNode:
         else:
             return self.befor.getDepThIndex()+1
 
-    def goNext(self):
+    def getNext(self):
         return self.next
 
     def returnBefor(self):
         return self.befor
 
-    def toSiblings(self, index=None):
+    def getSiblings(self, index=None):
         if index is None:
             return self.siblings
         else:
