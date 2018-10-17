@@ -111,6 +111,7 @@ class TreePlotter:
         self.totalD = float(self._getTreeDepth(inTree))
         # 消去初始间隔
         self.x0ff = -1 / 2.0 / self.totalW
-        self.y0ff = 1.0
-        self._plotTree(inTree, (0.5, 1.0), "")
+        # 加上1.0 / self.totalD是为了防止_plotTree内第一个减去1.0 / self.totalD
+        # 现在没加
+        self._plotTree(inTree, (0.5, 1.0), "Head")
         plt.show()
