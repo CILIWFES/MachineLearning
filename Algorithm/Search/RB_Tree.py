@@ -16,7 +16,7 @@ class RB_TreeNode(BinaryNode):
 # 红黑树
 class RB_Tree(BinaryTree):
 
-    # indexFunc(返回索引值)   dataFunc(返回数据值)   eqFunc(判断数据是不是需要查询的数据)
+    # indexFunc(返回索引值)   dataFunc(返回数据值)
     # 例如hash表
     # key                   (key,obj)
     def __init__(self, indexFunc=lambda x: x, dataFunc=lambda x: x):
@@ -34,19 +34,38 @@ class RB_Tree(BinaryTree):
 
         self.headNode = self._CreatNode(None)  # 头指针没有值
         # right 只是方便
-        self.headNode.right = self._CreatNode(self.headNode, self.indexFunction(dataTuples[0]), dataTuples)
-        self.headNode.right = RB_TreeNode.BLACK
+        self.headNode.right = self._CreatNode(self.headNode, self.indexFunc(dataTuples[0][0]), dataTuples[0])
+        self.headNode.right.color = RB_TreeNode.BLACK
         # 构建树
-        for data in dataTuples:
+        for data in dataTuples[1:]:
             self._Put(data[0], data)
+
+    def makeDic(self, node):
+        dic = None
+        if node.left is not None:
+            dicL = self.makeDic(node.left)
+            colorL = "RL" if node.left.color == RB_TreeNode.RED else "BL"
+            if dic is None:
+                dic = {colorL: dicL}
+            else:
+                dic[colorL] = dicL
+
+        if node.right is not None:
+            dicR = self.makeDic(node.right)
+            colorR = "RR" if node.right.color == RB_TreeNode.RED else "BR"
+            if dic is None:
+                dic = {colorR: dicR}
+            else:
+                dic[colorR] = dicR
+        return {node.key: dic}
 
     # 添加元素
     def Put(self, realKey, value):
-        key, value = self.indexFunction(realKey), (realKey, self.dataFunc(value))
+        key, value = self.indexFunc(realKey), (realKey, self.dataFunc(value))
         self._Put(key, value)
 
     def _Put(self, key, value):
-        node: RB_TreeNode = self._FindScope(key)
+        node: RB_TreeNode = self._FindScopeNode(key)
         if node.key == key:
             node.value.append(value)
         else:
@@ -57,17 +76,14 @@ class RB_Tree(BinaryTree):
     # beforNode必须保证要插入的节点是根节点
     def _InsertNode(self, beforNode: RB_TreeNode, key, value) -> RB_TreeNode:
         newNode = self._CreatNode(beforNode, key, value)
-        if beforNode.key > key:
-            if beforNode.left is not None:
-                raise Exception("SB 左边不是根节点!!")
+
+        if beforNode.key > newNode.key:
             beforNode.left = newNode
-
-        else:  # 不可能等于(上面已经过滤)
-            if beforNode.right is not None:
-                raise Exception("SB 右边不是根节点!!")
+        else:
             beforNode.right = newNode
+        newNode.befor = beforNode
 
-        if beforNode.befor.color != RB_TreeNode.BLACK:
+        if beforNode.color != RB_TreeNode.BLACK:
             self.RBCore(newNode)
 
         return newNode
@@ -82,7 +98,7 @@ class RB_Tree(BinaryTree):
         # 关系 子变父 ,父变子
         if befor == beBefor.left and childNode != befor.left:
             childNode, befor = self.Syntropy(childNode, befor, True)  # 左旋转
-        elif befor == beBefor.right and childNode != befor.righ:
+        elif befor == beBefor.right and childNode != befor.right:
             childNode, befor = self.Syntropy(childNode, befor, False)  # 右旋转
 
         elif beforBroNode is None or beforBroNode.color == RB_TreeNode.BLACK:  # 准备向黑色一方旋转
@@ -91,7 +107,7 @@ class RB_Tree(BinaryTree):
             beBefor = self.Discoloration(befor, beBefor, beforBroNode)
             if beBefor.befor.color != RB_TreeNode.BLACK and beBefor != self.headNode.right:
                 self.RBCore(beBefor)  # 递归修改
-            else:
+            elif beBefor == self.headNode.right:
                 beBefor.color = RB_TreeNode.BLACK
 
     # 同向
@@ -126,14 +142,16 @@ class RB_Tree(BinaryTree):
         # 父节点变为爷节点
         node.befor = graBefor
         if isLeft:  # 左旋转
-            # 子树交换
-            node.left.befor = befor
+            if node.left is not None:
+                # 子树交换
+                node.left.befor = befor
             befor.right = node.left
             # 原父节点 指向 爷节点
             node.left = befor
         else:  # 右旋转
-            # 子树交换
-            node.right.befor = befor
+            if node.right is not None:
+                # 子树交换
+                node.right.befor = befor
             befor.left = node.right
             # 原父节点 指向 爷节点
             node.right = befor
@@ -143,7 +161,7 @@ class RB_Tree(BinaryTree):
         pass
 
     def Find(self, realKey):
-        key = self.indexFunction(realKey)
+        key = self.indexFunc(realKey)
         findNode = self._FindScopeNode(key)
         if findNode == None:
             return None
@@ -155,7 +173,7 @@ class RB_Tree(BinaryTree):
         return None
 
     def Update(self, realKey, value):
-        key = self.indexFunction(realKey)
+        key = self.indexFunc(realKey)
         findNode = self._FindScopeNode(key)
         if findNode is None:
             return False  # 表示不存在
@@ -173,8 +191,8 @@ class RB_Tree(BinaryTree):
             return self.headNode.right
 
         findingNode: RB_TreeNode = self.headNode.right
-        befor: RB_TreeNode = findingNode.befor
-        while findingNode is None:
+        befor: RB_TreeNode = findingNode
+        while findingNode is not None:
 
             if key < findingNode.key:
                 befor = findingNode

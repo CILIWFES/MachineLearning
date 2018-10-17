@@ -15,4 +15,17 @@ import gc
 import objgraph
 import graphviz
 
+from Visualization.TreePlotter import *
+
+
+from Algorithm.Search import *
+
+RB_Tree = RB_Tree()
+keys = [item for item in range(20)]
+
+RB_Tree.BuildTree(keys, keys)
+dic=RB_Tree.makeDic(RB_Tree.headNode.right)
+
+print(dic)
+TreePlotter.createPlot(dic)
 

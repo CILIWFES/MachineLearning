@@ -3,7 +3,7 @@ from DataStructure.Tree.Base import *
 
 class BinaryNode(TreeNode):
     def __init__(self, befor=None, key=None, value=None, left=None, right=None, siblings=None):
-        super().__init__(self, befor, key, value, None, siblings)
+        super().__init__(befor, key, value, None, siblings)
         del self.next
         self.left = left
         self.right = right
