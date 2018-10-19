@@ -2,10 +2,10 @@ from typing import List
 
 
 class TreeNode:
-    def __init__(self, befor=None, key=None, value=None, next=None, siblings=None, depthIndex=None):
+    def __init__(self, befor=None, key=None, value=None, next:List=None, siblings=None, depthIndex=None):
         self.value = value
         self.key = key
-        self.next: TreeNode = next
+        self.next: List[TreeNode] = next
         self.befor: TreeNode = befor
         self.siblings: List[TreeNode] = siblings
         self.__depthIndex = depthIndex
@@ -60,7 +60,7 @@ class TreeBase:
         pass
 
     # 新增节点
-    def _CreatNode(self, befor: TreeNode = None, key=None, value=None, next: TreeNode = None, siblings=None)->TreeNode:
+    def _CreatNode(self, befor: TreeNode = None, key=None, value=None, next: List[TreeNode] = None, siblings=None)->TreeNode:
         node: TreeNode = TreeNode(befor=befor, key=key, value=value, next=next, siblings=siblings)
         return node
 

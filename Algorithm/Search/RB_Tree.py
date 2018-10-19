@@ -2,6 +2,17 @@ from DataStructure.Tree import *
 from typing import List
 
 
+# 例子
+# RB_Tree = RB_Tree()
+# keys = [item for item in range(18)]
+#
+# RB_Tree.BuildTree(keys, keys)
+# dic = RB_Tree.toDict(RB_Tree.headNode.right)
+#
+# print(dic)
+# TreePlotter.createPlot(dic)
+
+
 class RB_TreeNode(BinaryNode):
     RED = 0
     BLACK = 1
@@ -40,24 +51,6 @@ class RB_Tree(BinaryTree):
         for data in dataTuples[1:]:
             self._Put(data[0], data)
 
-    def makeDic(self, node):
-        dic = None
-        if node.left is not None:
-            dicL = self.makeDic(node.left)
-            colorL = "RL" if node.left.color == RB_TreeNode.RED else "BL"
-            if dic is None:
-                dic = {colorL: dicL}
-            else:
-                dic[colorL] = dicL
-
-        if node.right is not None:
-            dicR = self.makeDic(node.right)
-            colorR = "RR" if node.right.color == RB_TreeNode.RED else "BR"
-            if dic is None:
-                dic = {colorR: dicR}
-            else:
-                dic[colorR] = dicR
-        return {node.key: dic}
 
     # 添加元素
     def Put(self, realKey, value):
@@ -210,3 +203,23 @@ class RB_Tree(BinaryTree):
 
     def _CreatNode(self, befor: RB_TreeNode = None, key=None, value=None, left=None, right=None) -> RB_TreeNode:
         return RB_TreeNode(befor, key, value, left, right)
+
+    def toDict(self, node):
+        dic = None
+        if node.left is not None:
+            dicL = self.toDict(node.left)
+            colorL = "RL" if node.left.color == RB_TreeNode.RED else "BL"
+            if dic is None:
+                dic = {colorL: dicL}
+            else:
+                dic[colorL] = dicL
+
+        if node.right is not None:
+            dicR = self.toDict(node.right)
+            colorR = "RR" if node.right.color == RB_TreeNode.RED else "BR"
+            if dic is None:
+                dic = {colorR: dicR}
+            else:
+                dic[colorR] = dicR
+        return {node.key: dic}
+
