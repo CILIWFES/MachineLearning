@@ -1,6 +1,5 @@
 from sklearn.datasets.base import Bunch
 import random
-from collections import Counter
 from typing import List
 
 
