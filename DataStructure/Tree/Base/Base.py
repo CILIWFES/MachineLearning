@@ -10,23 +10,11 @@ class TreeNode:
         self.siblings: List[TreeNode] = siblings
         self.__depthIndex = depthIndex
 
-    def getDepThIndex(self):
+    def getDepthIndex(self):
         if self.befor is None:
             return 0
         else:
             return self.befor.getDepThIndex()+1
-
-    def getNext(self):
-        return self.next
-
-    def returnBefor(self):
-        return self.befor
-
-    def getSiblings(self, index=None):
-        if index is None:
-            return self.siblings
-        else:
-            return self.siblings[0]
 
 
 class TreeBase:

@@ -14,6 +14,7 @@ class BinaryNode(TreeNode):
         else:
             return self.right
 
+    # 获得兄弟节点
     def getSiblings(self):
         if self.befor == None:
             return None

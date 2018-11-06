@@ -15,13 +15,22 @@ import gc
 import objgraph
 import graphviz
 from Visualization.TreePlotter import *
-from Algorithm.Search import *
 
-RB_Tree = RB_Tree()
-keys = [item for item in range(20)]
+# from Algorithm.Search import *
 
-RB_Tree.BuildTree(keys, keys)
-dic = RB_Tree.toDict(RB_Tree.headNode.right)
+# RB_Tree = RB_Tree()
+# keys = [item for item in range(20)]
+#
+# RB_Tree.BuildTree(keys, keys)
+# dic = RB_Tree.toDict(RB_Tree.headNode.right)
+#
+# print(dic)
+# TreePlotter.createPlot(dic)
 
-print(dic)
-TreePlotter.createPlot(dic)
+
+lst = [i for i in range(1000000)]
+MPoint.setPoint()
+
+for i in lst:
+    pass
+MPoint.showPoint()
