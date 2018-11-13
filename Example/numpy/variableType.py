@@ -77,6 +77,9 @@ void	    V
 
 
 def conversion():
+    """
+    https://www.cnblogs.com/hellcat/p/8711160.html
+    """
     # (flexible_dtype, itemsize)第一个大小不固定的参数类型，第二传入大小：
     dt = np.dtype(("V", 10))  # 10位
 
@@ -137,7 +140,8 @@ def conversion():
     dt = np.dtype({'names': ('Date', 'Close'), 'formats': ('S10', 'f8')})
     item = np.array([('sadas', 0.58755)], dtype=dt)
     print(item)
-    dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'], 'offsets': [0, 2], 'titles': ['Red pixel', 'Blue pixel']})
+    dt = np.dtype(
+        {'names': ['r', 'b'], 'formats': ['u1', 'u1'], 'offsets': [0, 2], 'titles': ['Red pixel', 'Blue pixel']})
     item = np.array([('1', '2')], dtype=dt)
     print(item)
 
@@ -147,5 +151,6 @@ def conversion():
     item = np.array([(145879)], dtype=dt)
     print(item)
     print(dt)
+
 
 conversion()
