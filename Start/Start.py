@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import psutil
 import gc
-import objgraph
-import graphviz
 from Visualization.TreePlotter import *
 
 # from Algorithm.Search import *

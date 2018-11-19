@@ -5,7 +5,8 @@ Numpy matrices必须是2维的,但是 numpy arrays (ndarrays) 可以是多维的
 Matrix是Array的一个小的分支，包含于Array。
 所以matrix 拥有array的所有特性。
 """
-
+array1 = np.array([[[[7, 8, 99]], [[7, 8, 99]]]])
+print(array1.shape)
 
 def firstShow():
     """
@@ -70,12 +71,10 @@ matrixAdvantage()
 
 """
 相反的是在numpy里面arrays遵从逐个元素的运算，
-所以array：c和d的c * d运算相当于matlab里面的c. * d运算。
+所以array：c和d的c * d运算相当于matlab里面的逐项相乘运算。
 而矩阵相乘，则需要numpy里面的dot命令
 运算符的作用也不一样
 """
-
-
 def arrayCalculate():
     c = np.array([[4, 3], [2, 1]])
     # 4 3
@@ -100,8 +99,6 @@ def arrayCalculate():
 但是如果只用array，你不仅可以实现matrix所有的功能，还减少了编程和阅读的麻烦。
 当然你可以通过下面的两条命令轻松的实现两者之间的转换：np.asmatrix和np.asarray
 """
-
-
 def Conversion():
     c = np.array([[4, 3], [2, 1]])
     a = np.mat('4 3; 2 1')
