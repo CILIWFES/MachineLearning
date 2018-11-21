@@ -87,6 +87,7 @@ def conversion():
     item = np.array("012345678910", dtype=dt)
     print(item)
     print(type(item))
+
     dt = np.dtype(('U', 5))  # 10字符unicode string
     item = np.array([23467865432, 1, 2, 3, 4, 5, 3245678654, 7, 8, 9, 10], dtype=dt)
     print(item)
