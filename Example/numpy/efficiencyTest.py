@@ -25,5 +25,3 @@ def Sord():
 # timeM=TimeM(Sord)
 # timeM.StartTimeMeasure(2)
 
-arr2 = np.random.random(2)
-print(arr2[0:2])
