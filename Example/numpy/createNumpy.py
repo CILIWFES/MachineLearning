@@ -68,4 +68,4 @@ def test():
     print("平均:", np.mean(arr1))
     print("方差:", np.std(arr1))
 
-test()
+# test()
