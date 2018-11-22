@@ -18,16 +18,33 @@ class KDTree(BinaryTree):
     # dimension:维度
     # datas:二维数据集合
     def __init__(self):
-        self.dimesion = 0
-        self.headNode = KDNode(None, 'Head', None, None, None)
+        self.headNode = KDNode(None, None, None, None, None)
 
-    def fit(self, datas: List[List[float]]):
+    def fit(self, datas):
         if len(datas) <= 0:
             raise Exception("请输入数据")
         datas = np.asarray(datas)
+        self.toSplitTree(self.headNode, datas)
 
-    def toSplitTree(self, datas):
-        pass
+    def toSplitTree(self, node: KDNode, datas):
+        splitIndex = self.selectColumnByStd(datas)
+        if splitIndex is None:
+            node.value = datas
+            node.key = None
+        else:
+            leftRows, rightRows, median = self.Median(splitIndex, datas)
+            leftNode, rightNode = self.creatNextNode(node, splitIndex, median)
+            node.key = splitIndex
+            node.value = median
+            self.toSplitTree(leftNode, leftRows)
+            self.toSplitTree(rightNode, rightRows)
+
+    def creatNextNode(self, beforNode: KDNode, key, value):
+        leftNode = KDNode(beforNode, key, value, None, None)
+        rightNode = KDNode(beforNode, key, value, None, None)
+        beforNode.left = leftNode
+        beforNode.right = rightNode
+        return leftNode, rightNode
 
     # numpy直接选取第一位
     def Median(self, columm, datas):
@@ -36,19 +53,19 @@ class KDTree(BinaryTree):
         # 获取中位数
         median = np.median(datasColumn)
         # 拆分列
-        leftRowIndex = datas[:, datasColumn < median]
-        difference = datasColumn.shape[1] // 2 - leftRowIndex.shape[1]
+        leftRows = datas[datasColumn < median]
+        difference = datasColumn.shape[-1] // 2 - leftRows.shape[1]
         if difference != 0:
-            rightRowIndex = datas[:, datasColumn > median]
-            medianRowIndex = datas[:, datasColumn == median]
+            rightRows = datas[datasColumn > median]
+            medianRowIndex = datas[datasColumn == median]
             # 合并difference+1个到leftRowIndex,
-            np.vstack((leftRowIndex, medianRowIndex[0:difference + 1]))
+            np.vstack((leftRows, medianRowIndex[0:difference + 1]))
             # 剩下的去rightRowIndex
-            np.vstack((rightRowIndex, medianRowIndex[difference + 1:]))
+            np.vstack((rightRows, medianRowIndex[difference + 1:]))
         else:
-            rightRowIndex = datas[:, datasColumn >= median]
+            rightRows = datas[:, datasColumn >= median]
 
-        return leftRowIndex, rightRowIndex
+        return leftRows, rightRows, median
 
     # 通过快排的原理预估第一位
     def forecastMedian(self):
@@ -64,8 +81,15 @@ class KDTree(BinaryTree):
         for i in range(shape[1]):
             std = np.std(datas[:, i])
             # 选取最大特征列
-            if std > maxColumn_Info:
+            if std > maxColumn_Info[1]:
                 maxColumn_Info[0] = i
                 maxColumn_Info[1] = std
 
         return maxColumn_Info[0] if maxColumn_Info[1] != 0 else None
+
+
+# test
+
+arr = np.random.random((100, 10))
+kdTree = KDTree()
+kdTree.fit(arr)
