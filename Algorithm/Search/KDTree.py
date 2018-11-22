@@ -26,6 +26,9 @@ class KDTree(BinaryTree):
             raise Exception("请输入数据")
         datas = np.asarray(datas)
 
+    def toSplitTree(self, datas):
+        pass
+
     # numpy直接选取第一位
     def Median(self, columm, datas):
         # 获取列数据

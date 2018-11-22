@@ -19,8 +19,6 @@ def Sord():
      np.argsort(arr)
 
 
-
-
 # Sord()
 # timeM=TimeM(Sord)
 # timeM.StartTimeMeasure(2)
