@@ -1,6 +1,7 @@
 from DataStructure.Tree import *
 from DataProcessing.ORM import *
 import numpy as np
+from Analysis.PerformanceMeasure import *
 from Global import *
 
 
@@ -181,12 +182,12 @@ class KDTree(BinaryTree):
 LoadPah = GLOCT.SUPPORT_PATH + "Algorithm/Pickle/Test/"
 fileName = "KDTree"
 # test
-per = False
+per = True
 if per:
     kdTree = KDTree.ORMLoad(LoadPah, fileName)
     arr = ORM.LoadPickle(LoadPah + 'testArr')
 else:
-    arr = np.random.random((999999, 4))
+    arr = np.random.random((9999, 4))
     kdTree = KDTree()
 
 kdTree.fit(arr)
@@ -195,20 +196,21 @@ if per:
     ORM.writePickle(LoadPah, "testArr", arr)
 
 print('________________________________')
-print(kdTree.Search((0.123, 0.33, 0.22, 0.33)))
 
+def test():
+    kdTree.Search((0.123, 0.33, 0.22, 0.33))
 
 def calculateDistant(target, index):
     return np.sum(np.power(np.power(target - index, 2), 0.5))
 
+def ttt():
+    min = 999
+    for item in arr:
+        mintemp = calculateDistant(item, (0.123, 0.33, 0.22, 0.33))
+        if mintemp < min:
+            min = mintemp
 
-min = 999
-minIndex = None
-for item in arr:
-    mintemp = calculateDistant(item, (0.123, 0.33, 0.22, 0.33))
-    if mintemp < min:
-        min = mintemp
-        minIndex = item
 
 print(min)
-print(minIndex)
+timeM=TimeM(ttt)
+timeM.StartTimeMeasure(100)
