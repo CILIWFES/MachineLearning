@@ -280,15 +280,21 @@ if not performance:
 def calculateDistant(index):
     return np.sum(np.power(np.power(target - index, 2), 0.5))
 
+searchCount=10
 
 def test_KDTree():
-    return [i[-1] for i in kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=10)]
+    return kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=searchCount)
 
 
 def test_Array():
-    sortList = SortList(getValFunc=calculateDistant, cntsLimit=1)
+    sortList = SortList(getValFunc=calculateDistant, cntsLimit=searchCount)
+    # min=9999
     for item in array:
         sortList.put(item)
+    #     mintemp=calculateDistant(item)
+    #     if min>=mintemp:
+    #         min=mintemp
+    # return min
     return sortList.getValList()
 
 
@@ -297,6 +303,6 @@ print('测试坐标', target)
 print('KD', test_KDTree())
 print('Arr', test_Array())
 timeM = TimeM(test_KDTree)
-timeM.StartTimeMeasure(1)
+timeM.StartTimeMeasure(10)
 timeM = TimeM(test_Array)
 timeM.StartTimeMeasure(1)
