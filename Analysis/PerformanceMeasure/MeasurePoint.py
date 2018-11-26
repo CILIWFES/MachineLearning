@@ -71,12 +71,13 @@ class RAMThread(threading.Thread):
     def __init__(self):
         super().__init__()
         self._RAMSize = 0
-        self._stop = True
+        self._stop = threading.Event()
+        self._stop.set()
         self.process = psutil.Process(os.getpid())
 
     def run(self):
         old_RAM_Occupy = self.process.memory_info().rss
-        while (self._stop):
+        while self._stop.isSet():
             now_RAM_Occupy = self.process.memory_info().rss
             program_RAM_Occupy = now_RAM_Occupy - old_RAM_Occupy
             # 判断垃圾没有被回收
@@ -86,5 +87,7 @@ class RAMThread(threading.Thread):
             time.sleep(RAMThread.SLEEPTIME)
 
     def getRAM(self):
-        self._stop = False
+        self._stop.clear()
+        # 不加会报错
+        time.sleep(RAMThread.SLEEPTIME)
         return self._RAMSize

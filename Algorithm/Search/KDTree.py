@@ -29,13 +29,12 @@ class KDSearch:
     # 数量模式
     COUNTSFLAG = DISTANCEFLAG + 1
 
-    # 所有元素搜索模式(相当于排序)
-    ALLFLAG = COUNTSFLAG + 1
-
-    def __init__(self, kdTree, searchModel=MINFLAG, searchCount=10, magnification=1, searchDistance=None, merge=False):
+    def __init__(self, kdTree, searchColums, searchModel=MINFLAG, searchCount=10, magnification=1, searchDistance=None,
+                 merge=False):
         self.sortList = None
         self.merge = merge
         self.searcheadNode = kdTree.headNode
+        self.kdTree = kdTree
         # 搜索模式
         self.searchModel = searchModel
         # 搜索数量/搜索模式距离放大倍数
@@ -43,13 +42,15 @@ class KDSearch:
         self.magnification = magnification
         # 搜索距离
         self.searchDistance = searchDistance
+        # 有效计算列
+        self.searchColums = searchColums
 
     # 以下有优先级判断
     # target         一维tuple
     # distant        距离
     # typeCounts     类型数量
     # realCounts     真实数量
-    def Search(self, target: tuple):
+    def Search(self, target):
         self.sortList = self.buildSortList(target)
         # 最小值模式
         if self.searchModel == KDSearch.MINFLAG:
@@ -64,17 +65,26 @@ class KDSearch:
             retList = self._SearchByCounts(target)
         else:
             raise Exception("请输入搜索模式")
+        return self.conversionList(retList)
 
-        return retList
+    # 适配target输入格式
+    def buildRealTarget(self, target):
+        target = np.asarray(target)
+        if target.shape[1] == len(self.kdTree.searchColums):
+            return target
+        else:
+            return target[:, self.kdTree.searchColums]
 
     def buildSortList(self, target):
         # 构造计算方法
         def calculateDistant(index):
+            index = self.getData(index)
             return self.calculateDistant(index, target)
 
-        mergeFunction = None
         if self.merge:
             mergeFunction = self.mergeFunction
+        else:
+            mergeFunction = None
 
         return SortList(calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN, cntsLimit=self.searchCount)
 
@@ -111,9 +121,12 @@ class KDSearch:
         return self.sortList.getAllList()[0:self.searchCount]
 
     # 对距离进行搜索
-    def _SearchByDistance(self, target: tuple, node):
+    def _SearchByDistance(self, target, node):
         if node.key is None:
-            minDistrance = self.calculateDistant(node.value[-1], target)
+            # 转化真实坐标
+            node_data = self.getData(node.value)
+            minDistrance = self.calculateDistant(node_data[-1], target)
+            # 存入索引,以value来维护
             self.sortList.put(node.value, minDistrance)
             return
         distance = target[node.key] - node.value
@@ -139,11 +152,25 @@ class KDSearch:
             val = self.searchDistance
         else:
             raise Exception("搜索模式错误")
-
         return val
 
-    def calculateDistant(self, target, index):
-        return np.sum(np.power(np.power(target - index, 2), 0.5))
+    # 根据坐标获取真实数据
+    # 返回数据点,距离
+    def conversionList(self, retList):
+        indexs = np.asarray([], dtype=int)
+        for item in retList:
+            indexs = np.hstack((item[SortList.DataIndex], indexs))
+        distances = [item[SortList.ValueIndex] for item in retList]
+        datas = self.kdTree.datas[indexs].tolist()
+        return datas, distances
+
+        # 根据坐标获取真实数据
+
+    def getData(self, index):
+        return self.kdTree.datas[index]
+
+    def calculateDistant(self, index, target):
+        return np.sum(np.power(np.power(index - target, 2), 0.5))
 
     def mergeFunction(self, merge1, merge2):
         return np.vstack((merge1, merge2))
@@ -159,6 +186,12 @@ class KDTree(BinaryTree):
     # 头节点即第一道分界线
     def __init__(self):
         self.headNode = KDNode(None, None, None, None, None)
+        # 计算数据
+        self.datas = []
+        # 总数据列
+        self.datasAll = []
+        # 搜索坐标集合
+        self.searchColums: list = None
 
     @staticmethod
     def ORMLoad(path, fileName):
@@ -167,35 +200,48 @@ class KDTree(BinaryTree):
     def ORMSave(self, path, fileName):
         ORM.writePickle(path, fileName, self)
 
-    def fit(self, datas):
+    def fit(self, datas, ignorColums: list = None):
         if len(datas) <= 0:
             raise Exception("请输入数据")
+
         datas = np.asanyarray(datas)
+        self.datasAll = datas
+        # 构建搜索列
+        self.searchColums: list = self.buildAvailableColums(datas.shape[1], ignorColums)
+        # 构建计算信息列
+        self.datas = datas[:, self.searchColums]
+        # 构建坐标索引
+        datas = np.hstack((self.datas, np.arange(datas.shape[0]).reshape(datas.shape[0], 1)))
         self.toSplitTree(self.headNode, datas)
 
     def toSplitTree(self, node: KDNode, datas):
+        # 记录数组数量
+        node.len = datas.shape[0]
         if len(datas) == 1:
-            # 长度1不需要计算
-            node.value = datas
             node.key = None
+            # 保持索引
+            node.value = datas[:, -1].astype(int)
             return
         else:
             splitIndex = self.selectColumnByStd(datas)
 
         if splitIndex is None:
             node.key = None
-            node.value = datas
-            node.len = datas.shape[1]
+            # 保持索引
+            node.value = datas[:, -1].astype(int)
         else:
-            leftRows, rightRows, median, min, max = self.Median(splitIndex, datas)
-            node.min = min
-            node.max = max
-            node.len = datas.shape[0]
+            leftRows, rightRows, median = self.Median(splitIndex, datas)
             leftNode, rightNode = self.creatNextNode(node, splitIndex, median)
             node.key = splitIndex
             node.value = median
             self.toSplitTree(leftNode, leftRows)
             self.toSplitTree(rightNode, rightRows)
+
+    def buildAvailableColums(self, columsSize, ignorColums: list) -> list:
+        if ignorColums is None:
+            ignorColums = []
+        self.ignorColums = ignorColums
+        return [i for i in range(columsSize) if i not in ignorColums]
 
     def creatNextNode(self, beforNode: KDNode, key, value):
         leftNode = KDNode(beforNode, key, value, None, None)
@@ -208,8 +254,6 @@ class KDTree(BinaryTree):
     def Median(self, columm, datas):
         # 获取列数据
         datasColumn = datas[:, columm]
-        max = np.max(datasColumn)
-        min = np.min(datasColumn)
         # 获取中位数
         median = np.median(datasColumn)
         # 拆分列
@@ -225,7 +269,7 @@ class KDTree(BinaryTree):
         else:
             rightRows = datas[datasColumn >= median]
 
-        return leftRows, rightRows, median, min, max
+        return leftRows, rightRows, median
 
     # 返回标准差最大的列
     # 若皆小于0表示数组皆相等,返回None作为标志
@@ -234,7 +278,7 @@ class KDTree(BinaryTree):
         # 最小列信息,列坐标/标准差
         maxColumn_Info = [0, 0]
 
-        for i in range(shape[1]):
+        for i in self.searchColums:
             std = np.std(datas[:, i])
             # 选取最大特征列
             if std > maxColumn_Info[1]:
@@ -248,8 +292,7 @@ class KDTree(BinaryTree):
 
     def Search(self, target, searchModel=KDSearch.MINFLAG, searchCount=None, magnification=1, searchDistance=None,
                merge=False):
-
-        search = KDSearch(self, searchModel, searchCount, magnification, searchDistance, merge)
+        search = KDSearch(self, self.searchColums, searchModel, searchCount, magnification, searchDistance, merge)
         return search.Search(target)
 
 
@@ -257,9 +300,7 @@ LoadPah = GLOCT.SUPPORT_PATH + "Algorithm/Pickle/Test/"
 fileName = "test_KDTree"
 # test
 arrSize = (999999, 5)
-
 target = (np.random.random((1, arrSize[1])).tolist())[-1]
-
 
 performance = True
 if performance:
@@ -280,10 +321,13 @@ if not performance:
 def calculateDistant(index):
     return np.sum(np.power(np.power(target - index, 2), 0.5))
 
-searchCount=10
+
+searchCount = 20
+
 
 def test_KDTree():
-    return kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=searchCount)
+    datas, distrance = kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=searchCount)
+    return distrance
 
 
 def test_Array():
@@ -298,11 +342,14 @@ def test_Array():
     return sortList.getValList()
 
 
-print('________________________________')
-print('测试坐标', target)
-print('KD', test_KDTree())
+# print('________________________________')
+# print('测试坐标', target)
+MPoint.setPoint()
+test_KDTree()
+MPoint.showPoint()
+
 print('Arr', test_Array())
 timeM = TimeM(test_KDTree)
-timeM.StartTimeMeasure(10)
+timeM.StartTimeMeasure(1)
 timeM = TimeM(test_Array)
 timeM.StartTimeMeasure(1)

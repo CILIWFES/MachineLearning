@@ -14,8 +14,6 @@ import psutil
 import gc
 from Visualization.TreePlotter import *
 
-# from Algorithm.Search import *
-
 # RB_Tree = RB_Tree()
 # keys = [item for item in range(20)]
 #
@@ -25,10 +23,8 @@ from Visualization.TreePlotter import *
 # print(dic)
 # TreePlotter.createPlot(dic)
 
-
-lst = [i for i in range(1000000)]
+arr = np.asarray([[10, 0], [10, 1]])
 MPoint.setPoint()
+print(arr.tolist())
 
-for i in lst:
-    pass
 MPoint.showPoint()
