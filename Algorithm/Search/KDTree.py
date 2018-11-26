@@ -3,6 +3,7 @@ from DataProcessing.ORM import *
 import numpy as np
 from Analysis.PerformanceMeasure import *
 from Global import *
+from Algorithm.SortList import *
 
 
 # KD树,二叉树,左树为小等于,右侧为大等于
@@ -18,90 +19,12 @@ class KDNode(BinaryNode):
         self.len = None
 
 
-class SearchSpace:
-    # 最小距离
-    MINFLAG = 0
-    # 距离模式
-    DISTANCEFLAG = MINFLAG + 1
-
-    # flag:0 表示普通最小距离模式
-    def __init__(self, searchModel=MINFLAG, searchDistance=None, merge=False):
-        self.space = list()
-        # 最小/最大距离
-        self.minDistance = None
-        self.maxDistance = None
-        # 搜索模式
-        self.searchModel = searchModel
-        # 搜索的最小距离
-        self.searchDistance = searchDistance
-        # 相同距离允许合并
-        self.merge = merge
-
-    # 三种模式
-    def put(self, data, distance):
-
-        # 程序前处理
-        if len(self.space) <= 0:
-            self.minDistance = distance
-            self.maxDistance = distance
-
-        # ---------------------------前处理
-        if self.searchModel == SearchSpace.DISTANCEFLAG \
-                and self.searchDistance < distance:
-            # 距离模式,长度超过距离
-            if len(self.space) <= 0:
-                # 默认就要清零
-                self.minDistance = None
-                self.maxDistance = None
-            return
-        # ---------------------------中间流程
-        # 开始插入
-        if distance <= self.minDistance:
-            # 小于最小要单独统计最小值
-            self.space.insert(0, (data, distance))
-            self.minDistance = distance
-
-        elif distance >= self.maxDistance:
-            self.space.append((data, distance))
-            self.maxDistance = distance
-        else:
-            isInser = False
-            # 排序插入
-            for index, item in enumerate(self.space):
-                if item[1] > distance:
-                    self.space.insert(index, (data, distance))
-                    isInser = True
-                    break
-                elif item[1] == distance:  # 距离相等判断是否合并
-                    if self.merge:  # 开始合并
-                        item[0] = np.vstack((item[0], data))
-                    else:  # 取消合并
-                        self.space.insert(index, (data, distance))
-                    isInser = True
-                    break
-
-            if not isInser:
-                self.space.append((data, distance))
-
-        # ---------------------------后处理
-        pass
-
-    def getSpace(self):
-        return self.space
-
-    def getSelectDistance(self):
-        if self.searchModel == SearchSpace.MINFLAG:
-            return self.minDistance
-        elif self.searchModel == SearchSpace.DISTANCEFLAG:
-            return self.searchDistance
-
-
 class KDSearch:
     # 最小距离
-    MINFLAG = SearchSpace.MINFLAG
+    MINFLAG = 0
 
     # 距离模式
-    DISTANCEFLAG = SearchSpace.DISTANCEFLAG
+    DISTANCEFLAG = MINFLAG + 1
 
     # 数量模式
     COUNTSFLAG = DISTANCEFLAG + 1
@@ -110,6 +33,8 @@ class KDSearch:
     ALLFLAG = COUNTSFLAG + 1
 
     def __init__(self, kdTree, searchModel=MINFLAG, searchCount=10, magnification=1, searchDistance=None, merge=False):
+        self.sortList = None
+        self.merge = merge
         self.searcheadNode = kdTree.headNode
         # 搜索模式
         self.searchModel = searchModel
@@ -118,7 +43,6 @@ class KDSearch:
         self.magnification = magnification
         # 搜索距离
         self.searchDistance = searchDistance
-        self.searchSpace = SearchSpace(searchModel=searchModel, searchDistance=searchDistance, merge=merge)
 
     # 以下有优先级判断
     # target         一维tuple
@@ -126,76 +50,103 @@ class KDSearch:
     # typeCounts     类型数量
     # realCounts     真实数量
     def Search(self, target: tuple):
+        self.sortList = self.buildSortList(target)
         # 最小值模式
         if self.searchModel == KDSearch.MINFLAG:
-            self._Search(target, self.searcheadNode)
-            space = self.searchSpace.getSpace()
+            self._SearchByDistance(target, self.searcheadNode)
+            retList = self.sortList.getAllList()
         # 距离模式
         elif self.searchModel == KDSearch.DISTANCEFLAG:
-            self._Search(target, self.searcheadNode)
-            space = self.searchSpace.getSpace()
+            self._SearchByDistance(target, self.searcheadNode)
+            retList = self.sortList.getAllList()
         # 数量模式(不推荐)
         elif self.searchModel == KDSearch.COUNTSFLAG:
-            space = self._SearchByCounts(target)
+            retList = self._SearchByCounts(target)
         else:
             raise Exception("请输入搜索模式")
 
-        return space
+        return retList
+
+    def buildSortList(self, target):
+        # 构造计算方法
+        def calculateDistant(index):
+            return self.calculateDistant(index, target)
+
+        mergeFunction = None
+        if self.merge:
+            mergeFunction = self.mergeFunction
+
+        return SortList(calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN, cntsLimit=self.searchCount)
 
     def _SearchByCounts(self, target):
         # 数量搜索模式本质上是距离与最小型的组合搜索
         if self.searchCount == self.searcheadNode.len:
-            self.searchModel = KDSearch.ALLFLAG
-            self._Search(target, self.searcheadNode)
-            space = self.searchSpace.getSpace()
-
+            raise Exception("错误,数量等于长度")
         # 直接报错
         elif self.searchCount > self.searcheadNode.len:
             raise Exception("错误,数量超出长度")
         else:
             self.searchModel = KDSearch.MINFLAG
-            self.searchSpace.searchModel = KDSearch.MINFLAG
-            self._Search(target, self.searcheadNode)
-            space = self.searchSpace.getSpace()
-            spaceLength = len(space)
-            while spaceLength < self.searchCount:
-                self.searchSpace.space = []
+            self._SearchByDistance(target, self.searcheadNode)
+            allList = self.sortList.getAllList()
+
+            allList = allList[0:self.searchCount]
+            list_Len = len(allList)
+            self.searchDistance = allList[-1][SortList.ValueIndex] * (self.searchCount / list_Len) * self.magnification
+            list_Len = 0
+            while list_Len < self.searchCount:
+                self.sortList.clear()
                 self.searchModel = KDSearch.DISTANCEFLAG
+
+                self._SearchByDistance(target, self.searcheadNode)
+                allList = self.sortList.getAllList()
+
+                list_Len = len(allList)
                 # 下一次的搜索距离是 当前最大距离(需要查找的元素总数/当前搜索出的元素数)*放大倍数
-                self.searchDistance = space[-1][1] * (self.searchCount / spaceLength) * self.magnification
+                self.searchDistance = allList[-1][SortList.ValueIndex] * (
+                        self.searchCount / list_Len) * self.magnification
 
-                self.searchSpace.searchModel = KDSearch.DISTANCEFLAG
-                self.searchSpace.searchDistance = self.searchDistance
-
-                self._Search(target, self.searcheadNode)
-                space = self.searchSpace.getSpace()
-                # 获取最大距离简单查询
-                spaceLength = len(space)
         self.searchModel = KDSearch.COUNTSFLAG
         self.searchDistance = None
-        return space[0:self.searchCount]
+        return self.sortList.getAllList()[0:self.searchCount]
 
-    def _Search(self, target: tuple, node):
+    # 对距离进行搜索
+    def _SearchByDistance(self, target: tuple, node):
         if node.key is None:
             minDistrance = self.calculateDistant(node.value[-1], target)
-            self.searchSpace.put(node.value, minDistrance)
+            self.sortList.put(node.value, minDistrance)
             return
         distance = target[node.key] - node.value
         if distance < 0:
-            self._Search(target, node.left)
-            if self.searchSpace.getSelectDistance() >= -distance:
-                self._Search(target, node.right)
+            self._SearchByDistance(target, node.left)
+            if self.judgmentDistance() >= -distance:
+                self._SearchByDistance(target, node.right)
 
         elif distance > 0:
-            self._Search(target, node.right)
-            if self.searchSpace.getSelectDistance() >= distance:
-                self._Search(target, node.left)
+            self._SearchByDistance(target, node.right)
+            if self.judgmentDistance() >= distance:
+                self._SearchByDistance(target, node.left)
         else:
-            self._Search(target, node.left)
-            self._Search(target, node.right)
+            self._SearchByDistance(target, node.left)
+            self._SearchByDistance(target, node.right)
+
+    def judgmentDistance(self):
+        # 最小值模式
+        if self.searchModel == KDSearch.MINFLAG:
+            val = self.sortList.getMinVal()
+        # 距离模式
+        elif self.searchModel == KDSearch.DISTANCEFLAG:
+            val = self.searchDistance
+        else:
+            raise Exception("搜索模式错误")
+
+        return val
 
     def calculateDistant(self, target, index):
         return np.sum(np.power(np.power(target - index, 2), 0.5))
+
+    def mergeFunction(self, merge1, merge2):
+        return np.vstack((merge1, merge2))
 
 
 #  临近距离树(可重复,二叉树)
@@ -276,10 +227,6 @@ class KDTree(BinaryTree):
 
         return leftRows, rightRows, median, min, max
 
-    # 通过快排预估中间位
-    def forecastMedian(self):
-        pass
-
     # 返回标准差最大的列
     # 若皆小于0表示数组皆相等,返回None作为标志
     def selectColumnByStd(self, datas):
@@ -309,48 +256,46 @@ class KDTree(BinaryTree):
 LoadPah = GLOCT.SUPPORT_PATH + "Algorithm/Pickle/Test/"
 fileName = "test_KDTree"
 # test
-arrSize = (9999, 2)
-
-array = np.random.random(arrSize)
+arrSize = (999999, 5)
 
 target = (np.random.random((1, arrSize[1])).tolist())[-1]
-print('测试坐标', target)
 
-performance = False
+
+performance = True
 if performance:
     kdTree = KDTree.ORMLoad(LoadPah, fileName)
     array = ORM.LoadPickle(LoadPah + 'test_Array')
 else:
+    array = np.random.random(arrSize)
     kdTree = KDTree()
     MPoint.setPoint()
     kdTree.fit(array)
     MPoint.showPoint()
 
-if performance:
+if not performance:
     kdTree.ORMSave(LoadPah, fileName)
     ORM.writePickle(LoadPah, "test_Array", array)
 
-print('________________________________')
 
-
-def calculateDistant(target, index):
+def calculateDistant(index):
     return np.sum(np.power(np.power(target - index, 2), 0.5))
 
 
 def test_KDTree():
-    return kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=20)
+    return [i[-1] for i in kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=10)]
 
 
 def test_Array():
-    lst=[]
+    sortList = SortList(getValFunc=calculateDistant, cntsLimit=1)
     for item in array:
-        mintemp = calculateDistant(item, target)
-        lst.append(mintemp)
-    return lst
+        sortList.put(item)
+    return sortList.getValList()
 
 
-print(test_KDTree())
-print(test_Array())
+print('________________________________')
+print('测试坐标', target)
+print('KD', test_KDTree())
+print('Arr', test_Array())
 timeM = TimeM(test_KDTree)
 timeM.StartTimeMeasure(1)
 timeM = TimeM(test_Array)
