@@ -31,17 +31,18 @@ def calculateDistant(index):
     return np.sum(np.power(np.power(target - index, 2), 0.5))
 
 
-searchCount = arrSize[0] // 1000
+searchCount = arrSize[0] // 10000
 print(searchCount)
 
 
 def test_KDTree():
-    datas, distrance = kdTree.Search(target, searchModel=KDSearch.COUNTSFLAG, searchCount=searchCount)
+    datas, distrance = kdTree.Search(target, searchModel=KDTree.COUNTS_TYPE, searchCount=searchCount,
+                                     sortListType=SortList.INTERPOLATIONSEARCH)
     return distrance
 
 
 def test_Array():
-    sortList = SortList(getValFunc=calculateDistant, cntsLimit=searchCount)
+    sortList = SortList(getValFunc=calculateDistant, cntsLimit=searchCount, searchType=SortList.INTERPOLATIONSEARCH)
     # min=9999
     for item in array:
         sortList.put(item)

@@ -19,14 +19,15 @@ class KDNode(BinaryNode):
 
 class KDSearch:
     # 最小距离
-    MINFLAG = 0
+    MIN_TYPE = 0
     # 距离模式
-    DISTANCEFLAG = MINFLAG + 1
+    DISTANCE_TYPE = MIN_TYPE + 1
 
     # 数量模式
-    COUNTSFLAG = DISTANCEFLAG + 1
+    COUNTS_TYPE = DISTANCE_TYPE + 1
 
-    def __init__(self, kdTree, searchColums, searchModel=MINFLAG, searchCount=10, magnification=1, searchDistance=None,
+    def __init__(self, kdTree, searchColums, searchModel=MIN_TYPE,
+                 searchCount=10, magnification=1, searchDistance=None,
                  merge=False):
         self.sortList = None
         self.merge = merge
@@ -47,18 +48,18 @@ class KDSearch:
     # distant        距离
     # typeCounts     类型数量
     # realCounts     真实数量
-    def Search(self, target):
-        self.sortList = self.buildSortList(target)
+    def Search(self, target, searchType):
+        self.sortList = self.buildSortList(target, searchType)
         # 最小值模式
-        if self.searchModel == KDSearch.MINFLAG:
+        if self.searchModel == KDSearch.MIN_TYPE:
             self._SearchByDistance(target, self.searcheadNode)
             retList = self.sortList.getAllList()
         # 距离模式
-        elif self.searchModel == KDSearch.DISTANCEFLAG:
+        elif self.searchModel == KDSearch.DISTANCE_TYPE:
             self._SearchByDistance(target, self.searcheadNode)
             retList = self.sortList.getAllList()
         # 数量模式(不推荐)
-        elif self.searchModel == KDSearch.COUNTSFLAG:
+        elif self.searchModel == KDSearch.COUNTS_TYPE:
             retList = self._SearchByCounts(target)
         else:
             raise Exception("请输入搜索模式")
@@ -72,7 +73,7 @@ class KDSearch:
         else:
             return target[:, self.kdTree.searchColums]
 
-    def buildSortList(self, target):
+    def buildSortList(self, target, searchType=SortList.INTERPOLATIONSEARCH):
         # 构造计算方法
         def calculateDistant(index):
             index = self.getData(index)
@@ -83,7 +84,8 @@ class KDSearch:
         else:
             mergeFunction = None
 
-        return SortList(calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN, cntsLimit=self.searchCount)
+        return SortList(searchType=searchType, getValFunc=calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN,
+                        cntsLimit=self.searchCount)
 
     def _SearchByCounts(self, target):
         # 数量搜索模式本质上是距离与最小型的组合搜索
@@ -93,7 +95,7 @@ class KDSearch:
         elif self.searchCount > self.searcheadNode.len:
             raise Exception("错误,数量超出长度")
         else:
-            self.searchModel = KDSearch.MINFLAG
+            self.searchModel = KDSearch.MIN_TYPE
             self._SearchByDistance(target, self.searcheadNode)
             allList = self.sortList.getAllList()
 
@@ -103,7 +105,7 @@ class KDSearch:
             list_Len = 0
             while list_Len < self.searchCount:
                 self.sortList.clear()
-                self.searchModel = KDSearch.DISTANCEFLAG
+                self.searchModel = KDSearch.DISTANCE_TYPE
 
                 self._SearchByDistance(target, self.searcheadNode)
                 allList = self.sortList.getAllList()
@@ -113,7 +115,7 @@ class KDSearch:
                 self.searchDistance = allList[-1][SortList.ValueIndex] * (
                         self.searchCount / list_Len) * self.magnification
 
-        self.searchModel = KDSearch.COUNTSFLAG
+        self.searchModel = KDSearch.COUNTS_TYPE
         self.searchDistance = None
         return self.sortList.getAllList()[0:self.searchCount]
 
@@ -142,10 +144,10 @@ class KDSearch:
 
     def judgmentDistance(self):
         # 最小值模式
-        if self.searchModel == KDSearch.MINFLAG:
+        if self.searchModel == KDSearch.MIN_TYPE:
             val = self.sortList.getMinVal()
         # 距离模式
-        elif self.searchModel == KDSearch.DISTANCEFLAG:
+        elif self.searchModel == KDSearch.DISTANCE_TYPE:
             val = self.searchDistance
         else:
             raise Exception("搜索模式错误")
@@ -176,7 +178,14 @@ class KDSearch:
 #  临近距离树(可重复,二叉树)
 class KDTree(BinaryTree):
     # 忽略标准差选取长度
-    IGNORESTDLEN = 32
+    IGNORESTD_LEN = 32
+    # 最小距离
+    MIN_TYPE = KDSearch.MIN_TYPE
+    # 距离模式
+    DISTANCE_TYPE = KDSearch.DISTANCE_TYPE
+
+    # 数量模式
+    COUNTS_TYPE = KDSearch.COUNTS_TYPE
 
     # dimension:维度
     # datas:二维数据集合
@@ -282,13 +291,13 @@ class KDTree(BinaryTree):
                 maxColumn_Info[0] = i
                 maxColumn_Info[1] = std
                 # 小于忽略长度不需要挨个计算节省算力
-                if len(datas) <= KDTree.IGNORESTDLEN:
+                if len(datas) <= KDTree.IGNORESTD_LEN:
                     break
 
         return maxColumn_Info[0] if maxColumn_Info[1] != 0 else None
 
-    def Search(self, target, searchModel=KDSearch.MINFLAG, searchCount=None, magnification=1, searchDistance=None,
-               merge=False):
+    # magnification放大倍数
+    def Search(self, target, searchModel=MIN_TYPE, searchCount=None, magnification=1, searchDistance=None,
+               merge=False, sortListType=SortList.INTERPOLATIONSEARCH):
         search = KDSearch(self, self.searchColums, searchModel, searchCount, magnification, searchDistance, merge)
-        return search.Search(target)
-
+        return search.Search(target, searchType=sortListType)
