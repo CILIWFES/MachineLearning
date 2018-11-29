@@ -22,36 +22,36 @@ class KDSearch:
     MIN_TYPE = 0
     # 距离模式
     DISTANCE_TYPE = MIN_TYPE + 1
-
     # 数量模式
     COUNTS_TYPE = DISTANCE_TYPE + 1
 
-    def __init__(self, kdTree, searchColums, searchModel=MIN_TYPE,
-                 searchCount=10, magnification=1, searchDistance=None,
-                 merge=False):
+    def __init__(self, kdTree, searchColums, searchModel, searchCount, magnification, searchDistance, merge):
+        #  排序数组
         self.sortList = None
+        # 是否合并
         self.merge = merge
+        # 计算数据
+        self.datas = kdTree.datas
+        # 搜索起始节点
         self.searcheadNode = kdTree.headNode
-        self.kdTree = kdTree
-        # 搜索模式
+        # 搜索模式 最小距离/距离模式/数量模式
         self.searchModel = searchModel
-        # 搜索数量/搜索模式距离放大倍数
+        # 搜索数量
         self.searchCount = searchCount
-        self.magnification = magnification
         # 搜索距离
         self.searchDistance = searchDistance
+        # 多次搜索模式距离放大倍数
+        self.magnification = magnification
         # 有效计算列
         self.searchColums = searchColums
 
-    # 以下有优先级判断
-    # target         一维tuple
-    # distant        距离
-    # typeCounts     类型数量
-    # realCounts     真实数量
+    # 开始搜索
     def Search(self, target, searchType):
+        # 建立排序数值
         self.sortList = self.buildSortList(target, searchType)
         # 最小值模式
         if self.searchModel == KDSearch.MIN_TYPE:
+            # 通过本质距离搜索
             self._SearchByDistance(target, self.searcheadNode)
             retList = self.sortList.getAllList()
         # 距离模式
@@ -68,22 +68,26 @@ class KDSearch:
     # 适配target输入格式
     def buildRealTarget(self, target):
         target = np.asarray(target)
-        if target.shape[1] == len(self.kdTree.searchColums):
+        if target.shape[1] == len(self.searchColums):
             return target
         else:
-            return target[:, self.kdTree.searchColums]
+            return target[:, self.searchColums]
 
-    def buildSortList(self, target, searchType=SortList.INTERPOLATIONSEARCH):
-        # 构造计算方法
+    # 建立排序数组
+    # target 目标数据
+    # searchType 排序引擎
+    def buildSortList(self, target, searchType):
+        # 构造闭包计算
         def calculateDistant(index):
-            index = self.getData(index)
+            index = self.getCalculateData(index)
             return self.calculateDistant(index, target)
 
+        # 检查是否提供合并方法
         if self.merge:
             mergeFunction = self.mergeFunction
         else:
             mergeFunction = None
-
+        # 构建排序列表
         return SortList(searchType=searchType, getValFunc=calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN,
                         cntsLimit=self.searchCount)
 
@@ -119,29 +123,36 @@ class KDSearch:
         self.searchDistance = None
         return self.sortList.getAllList()[0:self.searchCount]
 
-    # 对距离进行搜索
+    # 对距离进行搜索(最小距离与邻近距离)
     def _SearchByDistance(self, target, node):
+        # 节点值为空,表示存在数据
         if node.key is None:
-            # 转化真实坐标
-            node_data = self.getData(node.value)
+            #  获取计算坐标坐标
+            node_data = self.getCalculateData(node.value)
+            # 计算距离
             minDistrance = self.calculateDistant(node_data[-1], target)
             # 存入索引,以value来维护
             self.sortList.put(node.value, minDistrance)
             return
         distance = target[node.key] - node.value
+        # 在树左节点
         if distance < 0:
             self._SearchByDistance(target, node.left)
+            # 判定选择的距离类型
             if self.judgmentDistance() >= -distance:
                 self._SearchByDistance(target, node.right)
-
+        # 树右节点
         elif distance > 0:
             self._SearchByDistance(target, node.right)
+            # 判定选择的距离类型
             if self.judgmentDistance() >= distance:
                 self._SearchByDistance(target, node.left)
+        # 相等左右互搜
         else:
             self._SearchByDistance(target, node.left)
             self._SearchByDistance(target, node.right)
 
+    # 判定选择的距离类型
     def judgmentDistance(self):
         # 最小值模式
         if self.searchModel == KDSearch.MIN_TYPE:
@@ -160,17 +171,18 @@ class KDSearch:
         for item in retList:
             indexs = np.hstack((item[SortList.DataIndex], indexs))
         distances = [item[SortList.ValueIndex] for item in retList]
-        datas = self.kdTree.datas[indexs].tolist()
+        datas = self.datas[indexs].tolist()
         return datas, distances
 
-        # 根据坐标获取真实数据
+    # 获取计算数据
+    def getCalculateData(self, index):
+        return self.datas[index]
 
-    def getData(self, index):
-        return self.kdTree.datas[index]
-
+    # 计算距离方程
     def calculateDistant(self, index, target):
         return np.sum(np.power(np.power(index - target, 2), 0.5))
 
+    # 合并方法
     def mergeFunction(self, merge1, merge2):
         return np.vstack((merge1, merge2))
 
@@ -193,63 +205,93 @@ class KDTree(BinaryTree):
     def __init__(self):
         self.headNode = KDNode(None, None, None, None, None)
         # 计算数据
-        self.datas = []
+        self.calculateDatas = []
         # 总数据列
-        self.datasAll = []
+        self.datas = []
         # 搜索坐标集合
         self.searchColums: list = None
 
     @staticmethod
-    def ORMLoad(path, fileName):
-        return ORM.LoadPickle(path + fileName)
+    def ORMLoad(path):
+        kDTree: KDTree = ORM.LoadPickle(path)
+        kDTree._initKDTree()
+        return kDTree
+
+    # 加载搜索列表,构建计算数据
+    def _initKDTree(self):
+        if self.searchColums is None:
+            self.calculateDatas = self.datas
+        else:
+            self.calculateDatas = self.datas[:, self.searchColums]
+        return self.calculateDatas
 
     def ORMSave(self, path, fileName):
+        # 这个数据不需要保存
+        dataTemp = self.calculateDatas
         ORM.writePickle(path, fileName, self)
+        self.calculateDatas = dataTemp
+
+    # 方法入口
+    # datas:数据集(二维数组)
+    # ignorColums: 忽略列坐标
 
     def fit(self, datas, ignorColums: list = None):
+        # 长度为0无意义
         if len(datas) <= 0:
             raise Exception("请输入数据")
 
+        # 转化为narrys类型
         datas = np.asanyarray(datas)
-        self.datasAll = datas
+        self.datas = datas
         # 构建搜索列
-        self.searchColums: list = self.buildAvailableColums(datas.shape[1], ignorColums)
-        # 构建计算信息列
-        self.datas = datas[:, self.searchColums]
-        # 构建坐标索引
-        datas = np.hstack((self.datas, np.arange(datas.shape[0]).reshape(datas.shape[0], 1)))
-        self.toSplitTree(self.headNode, datas)
+        self.searchColums: list = self._buildAvailableColums(datas.shape[1], ignorColums)
+        # 构建计算数据
+        self.calculateDatas = self._initKDTree()
+        # 添加坐标索引在尾部(-1)
+        datas = np.hstack((self.calculateDatas, np.arange(datas.shape[0]).reshape(datas.shape[0], 1)))
+        # 开始分割KDTree
+        self._toSplitTree(self.headNode, datas)
 
-    def toSplitTree(self, node: KDNode, datas):
+    # 分割KDTree
+    def _toSplitTree(self, node: KDNode, datas):
         # 记录数组数量
         node.len = datas.shape[0]
+        # 长度为1直接处插入
         if len(datas) == 1:
             node.key = None
-            # 保持索引
+            # 插入索引
             node.value = datas[:, -1].astype(int)
             return
-        else:
-            splitIndex = self.selectColumnByStd(datas)
 
+        # 选择分割坐标
+        splitIndex = self._selectColumnByStd(datas)
+        # 为空表示全部相等
         if splitIndex is None:
             node.key = None
-            # 保持索引
+            # 插入索引
             node.value = datas[:, -1].astype(int)
         else:
-            leftRows, rightRows, median = self.Median(splitIndex, datas)
-            leftNode, rightNode = self.creatNextNode(node, splitIndex, median)
+            leftRows, rightRows, median = self._Median(splitIndex, datas)
+            # 创建节点
+            leftNode, rightNode = self._creatNextNode(node, splitIndex, median)
+            # 拆封坐标
             node.key = splitIndex
+            # 中间值
             node.value = median
-            self.toSplitTree(leftNode, leftRows)
-            self.toSplitTree(rightNode, rightRows)
+            # 分割左
+            self._toSplitTree(leftNode, leftRows)
+            # 分割右
+            self._toSplitTree(rightNode, rightRows)
 
-    def buildAvailableColums(self, columsSize, ignorColums: list) -> list:
+    # 构建可用搜索数组
+    def _buildAvailableColums(self, columsSize, ignorColums: list) -> list:
         if ignorColums is None:
             ignorColums = []
         self.ignorColums = ignorColums
         return [i for i in range(columsSize) if i not in ignorColums]
 
-    def creatNextNode(self, beforNode: KDNode, key, value):
+    # 添加节点
+    def _creatNextNode(self, beforNode: KDNode, key, value):
         leftNode = KDNode(beforNode, key, value, None, None)
         rightNode = KDNode(beforNode, key, value, None, None)
         beforNode.left = leftNode
@@ -257,13 +299,14 @@ class KDTree(BinaryTree):
         return leftNode, rightNode
 
     # numpy直接选取第一位
-    def Median(self, columm, datas):
+    def _Median(self, columm, datas):
         # 获取列数据
         datasColumn = datas[:, columm]
         # 获取中位数
         median = np.median(datasColumn)
         # 拆分列
         leftRows = datas[datasColumn < median]
+        # 计算是否均分数据集
         difference = datasColumn.shape[-1] // 2 - leftRows.shape[-1]
         if difference != 0:
             rightRows = datas[datasColumn > median]
@@ -273,14 +316,14 @@ class KDTree(BinaryTree):
             # 剩下的去rightRowIndex
             rightRows = np.vstack((rightRows, medianRowIndex[difference + 1:]))
         else:
+            # 均分的话,直接拆
             rightRows = datas[datasColumn >= median]
 
         return leftRows, rightRows, median
 
     # 返回标准差最大的列
     # 若皆小于0表示数组皆相等,返回None作为标志
-    def selectColumnByStd(self, datas):
-        shape = np.shape(datas)
+    def _selectColumnByStd(self, datas):
         # 最小列信息,列坐标/标准差
         maxColumn_Info = [0, 0]
 
@@ -290,13 +333,18 @@ class KDTree(BinaryTree):
             if std > maxColumn_Info[1]:
                 maxColumn_Info[0] = i
                 maxColumn_Info[1] = std
-                # 小于忽略长度不需要挨个计算节省算力
+                # 忽略长度不需要逐个计算
                 if len(datas) <= KDTree.IGNORESTD_LEN:
                     break
-
+        # 返回方差最大列,若为0表示皆相等
         return maxColumn_Info[0] if maxColumn_Info[1] != 0 else None
 
-    # magnification放大倍数
+    # searchModel搜索模式 最邻近/数量邻近/距离邻近
+    # searchCount 数量筛选,数量邻近不能为空/其他可以为空
+    # searchDistance 距离,距离模式不能为空,其他可以为空
+    # magnification 放大倍数,若一次搜索小于数量模式 ,将结合长度进行等比放大
+    # sortListType 存储引擎类型,插值,顺序,二分
+    # merge 合并类型
     def Search(self, target, searchModel=MIN_TYPE, searchCount=None, magnification=1, searchDistance=None,
                merge=False, sortListType=SortList.INTERPOLATIONSEARCH):
         search = KDSearch(self, self.searchColums, searchModel, searchCount, magnification, searchDistance, merge)

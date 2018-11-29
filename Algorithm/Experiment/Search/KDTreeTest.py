@@ -13,7 +13,7 @@ target = (np.random.random((1, arrSize[1])).tolist())[-1]
 
 performance = True
 if performance:
-    kdTree = KDTree.ORMLoad(LoadPah, fileName)
+    kdTree = KDTree.ORMLoad(LoadPah+fileName)
     array = ORM.LoadPickle(LoadPah + 'test_Array')
 else:
     array = np.random.random(arrSize)
