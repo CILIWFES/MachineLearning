@@ -31,6 +31,8 @@ class KDSearch:
         # 是否合并
         self.merge = merge
         # 计算数据
+        self.calculateDatas = kdTree.calculateDatas
+        # 真实数据
         self.datas = kdTree.datas
         # 搜索起始节点
         self.searcheadNode = kdTree.headNode
@@ -47,8 +49,10 @@ class KDSearch:
 
     # 开始搜索
     def Search(self, target, searchType):
+        target = self._buildRealTarget(target)
+
         # 建立排序数值
-        self.sortList = self.buildSortList(target, searchType)
+        self.sortList = self._buildSortList(target, searchType, self.searchCount)
         # 最小值模式
         if self.searchModel == KDSearch.MIN_TYPE:
             # 通过本质距离搜索
@@ -63,34 +67,9 @@ class KDSearch:
             retList = self._SearchByCounts(target)
         else:
             raise Exception("请输入搜索模式")
-        return self.conversionList(retList)
+        return self._getDatasList(retList)
 
-    # 适配target输入格式
-    def buildRealTarget(self, target):
-        target = np.asarray(target)
-        if target.shape[1] == len(self.searchColums):
-            return target
-        else:
-            return target[:, self.searchColums]
-
-    # 建立排序数组
-    # target 目标数据
-    # searchType 排序引擎
-    def buildSortList(self, target, searchType):
-        # 构造闭包计算
-        def calculateDistant(index):
-            index = self.getCalculateData(index)
-            return self.calculateDistant(index, target)
-
-        # 检查是否提供合并方法
-        if self.merge:
-            mergeFunction = self.mergeFunction
-        else:
-            mergeFunction = None
-        # 构建排序列表
-        return SortList(searchType=searchType, getValFunc=calculateDistant, mergeFunc=mergeFunction, model=SortList.MIN,
-                        cntsLimit=self.searchCount)
-
+    # 通过邻近数量来搜索
     def _SearchByCounts(self, target):
         # 数量搜索模式本质上是距离与最小型的组合搜索
         if self.searchCount == self.searcheadNode.len:
@@ -99,38 +78,41 @@ class KDSearch:
         elif self.searchCount > self.searcheadNode.len:
             raise Exception("错误,数量超出长度")
         else:
+            magnTemp = self.magnification
+            # 先简单搜索
             self.searchModel = KDSearch.MIN_TYPE
+            # 查询最近距离数组
             self._SearchByDistance(target, self.searcheadNode)
             allList = self.sortList.getAllList()
-
-            allList = allList[0:self.searchCount]
             list_Len = len(allList)
-            self.searchDistance = allList[-1][SortList.ValueIndex] * (self.searchCount / list_Len) * self.magnification
-            list_Len = 0
-            while list_Len < self.searchCount:
+            while list_Len < self.searchCount or self.searchModel == KDSearch.MIN_TYPE:
+                lastVal = allList[-1][SortList.ValueIndex]
                 self.sortList.clear()
+                # 自动调整搜索范围
+                self.searchDistance, magnTemp = self.increaseByDegrees(lastVal, list_Len, magnTemp)
+                # 切换距离搜索
                 self.searchModel = KDSearch.DISTANCE_TYPE
-
                 self._SearchByDistance(target, self.searcheadNode)
                 allList = self.sortList.getAllList()
-
                 list_Len = len(allList)
-                # 下一次的搜索距离是 当前最大距离(需要查找的元素总数/当前搜索出的元素数)*放大倍数
-                self.searchDistance = allList[-1][SortList.ValueIndex] * (
-                        self.searchCount / list_Len) * self.magnification
-
         self.searchModel = KDSearch.COUNTS_TYPE
         self.searchDistance = None
         return self.sortList.getAllList()[0:self.searchCount]
+
+    # 计算递增放大倍数
+    def increaseByDegrees(self, lastVal, search_List_Len: int, magnification):
+        distrance = lastVal * (self.searchCount / search_List_Len) * magnification
+        magnification += self.magnification
+        return distrance, magnification
 
     # 对距离进行搜索(最小距离与邻近距离)
     def _SearchByDistance(self, target, node):
         # 节点值为空,表示存在数据
         if node.key is None:
             #  获取计算坐标坐标
-            node_data = self.getCalculateData(node.value)
+            node_data = self._getCalculateData(node.value)
             # 计算距离
-            minDistrance = self.calculateDistant(node_data[-1], target)
+            minDistrance = self._calculateDistant(node_data[-1], target)
             # 存入索引,以value来维护
             self.sortList.put(node.value, minDistrance)
             return
@@ -139,13 +121,13 @@ class KDSearch:
         if distance < 0:
             self._SearchByDistance(target, node.left)
             # 判定选择的距离类型
-            if self.judgmentDistance() >= -distance:
+            if self._judgmentDistance() >= -distance:
                 self._SearchByDistance(target, node.right)
         # 树右节点
         elif distance > 0:
             self._SearchByDistance(target, node.right)
             # 判定选择的距离类型
-            if self.judgmentDistance() >= distance:
+            if self._judgmentDistance() >= distance:
                 self._SearchByDistance(target, node.left)
         # 相等左右互搜
         else:
@@ -153,7 +135,7 @@ class KDSearch:
             self._SearchByDistance(target, node.right)
 
     # 判定选择的距离类型
-    def judgmentDistance(self):
+    def _judgmentDistance(self):
         # 最小值模式
         if self.searchModel == KDSearch.MIN_TYPE:
             val = self.sortList.getMinVal()
@@ -166,24 +148,49 @@ class KDSearch:
 
     # 根据坐标获取真实数据
     # 返回数据点,距离
-    def conversionList(self, retList):
+    def _getDatasList(self, retList):
         indexs = np.asarray([], dtype=int)
-        for item in retList:
-            indexs = np.hstack((item[SortList.DataIndex], indexs))
         distances = [item[SortList.ValueIndex] for item in retList]
         datas = self.datas[indexs].tolist()
         return datas, distances
 
+    # 适配target输入格式
+    def _buildRealTarget(self, target):
+        target = np.asarray(target)
+        if target.shape[-1] == len(self.searchColums):
+            return target
+        else:
+            return target[:, self.searchColums]
+
+    # 建立排序数组
+    # target 目标数据
+    # searchType 排序引擎
+    def _buildSortList(self, target, searchType, cntsLimit):
+        # 构造闭包计算
+        def calculateDistant(index):
+            index = self._getCalculateData(index)
+            return self._calculateDistant(index, target)
+
+        # 检查是否提供合并方法
+        if self.merge:
+            mergeFunction = self._mergeFunction
+        else:
+            mergeFunction = None
+        # 构建排序列表
+        return SortList(searchType=searchType, getValFunc=calculateDistant, mergeFunc=mergeFunction,
+                        model=SortList.MIN,
+                        cntsLimit=cntsLimit)
+
     # 获取计算数据
-    def getCalculateData(self, index):
-        return self.datas[index]
+    def _getCalculateData(self, index):
+        return self.calculateDatas[index]
 
     # 计算距离方程
-    def calculateDistant(self, index, target):
+    def _calculateDistant(self, index, target):
         return np.sum(np.power(np.power(index - target, 2), 0.5))
 
     # 合并方法
-    def mergeFunction(self, merge1, merge2):
+    def _mergeFunction(self, merge1, merge2):
         return np.vstack((merge1, merge2))
 
 
@@ -199,9 +206,6 @@ class KDTree(BinaryTree):
     # 数量模式
     COUNTS_TYPE = KDSearch.COUNTS_TYPE
 
-    # dimension:维度
-    # datas:二维数据集合
-    # 头节点即第一道分界线
     def __init__(self):
         self.headNode = KDNode(None, None, None, None, None)
         # 计算数据
@@ -345,7 +349,7 @@ class KDTree(BinaryTree):
     # magnification 放大倍数,若一次搜索小于数量模式 ,将结合长度进行等比放大
     # sortListType 存储引擎类型,插值,顺序,二分
     # merge 合并类型
-    def Search(self, target, searchModel=MIN_TYPE, searchCount=None, magnification=1, searchDistance=None,
+    def Search(self, target, searchModel=MIN_TYPE, searchCount=None, magnification=0.5, searchDistance=None,
                merge=False, sortListType=SortList.INTERPOLATIONSEARCH):
         search = KDSearch(self, self.searchColums, searchModel, searchCount, magnification, searchDistance, merge)
         return search.Search(target, searchType=sortListType)
