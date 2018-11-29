@@ -47,3 +47,10 @@ class ORM:
             for fileName in fileList:
                 fileinfo.append((mydir, fileName))
         return fileinfo
+
+    # 判断文件/文件夹是否存在
+    def exist(self, path):
+        if os.path.exists(path):
+            return True
+        else:
+            return False

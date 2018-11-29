@@ -51,7 +51,7 @@ print('搜索数量', searchCount)
 # KDTree方法
 def test_KDTree():
     datas, distrance = kdTree.Search(target, searchModel=KDTree.COUNTS_TYPE, searchCount=searchCount, magnification=0.1)
-    return distrance
+    return datas, distrance
 
 
 # 数组遍历方法
@@ -59,7 +59,7 @@ def test_Array():
     sortList = SortList(getValFunc=calculateDistant, cntsLimit=searchCount, searchType=SortList.INTERPOLATIONSEARCH)
     for item in array:
         sortList.put(item)
-    return sortList.getValList()
+    return sortList.getAllList()
 
 
 print('________________________________')
@@ -67,7 +67,7 @@ print('测试坐标', target)
 
 print('测试KD树')
 MPoint.setPoint()
-val = test_KDTree()
+datas, val = test_KDTree()
 MPoint.showPoint()
 
 print('测试顺序查找')
@@ -79,12 +79,12 @@ if valArr:
     print('正在对比')
     flag = True
     for i in range(len(val)):
-        if val[i] != valArr[i]:
+        if val[i] != valArr[i][-1]:
             print('错误:', i, 'KDTree', val, 'Array:', valArr)
             flag = False
         break
     if flag:
-        print('无错误,最小值:', val[0])
+        print('无错误,最小值:', val[0], '坐标', datas[0])
 #
 # timeM = TimeM(test_KDTree)
 # timeM.StartTimeMeasure(1)

@@ -149,7 +149,7 @@ class KDSearch:
     # 根据坐标获取真实数据
     # 返回数据点,距离
     def _getDatasList(self, retList):
-        indexs = np.asarray([], dtype=int)
+        indexs = np.asarray(retList, dtype=int)
         distances = [item[SortList.ValueIndex] for item in retList]
         datas = self.datas[indexs].tolist()
         return datas, distances
