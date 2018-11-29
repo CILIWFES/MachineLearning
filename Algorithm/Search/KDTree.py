@@ -97,6 +97,7 @@ class KDSearch:
                 list_Len = len(allList)
         self.searchModel = KDSearch.COUNTS_TYPE
         self.searchDistance = None
+        print('邻近搜索次数:', int(magnTemp / self.magnification), '次')
         return self.sortList.getAllList()[0:self.searchCount]
 
     # 计算递增放大倍数
@@ -150,6 +151,7 @@ class KDSearch:
     # 返回数据点,距离
     def _getDatasList(self, retList):
         indexs = np.asarray(retList, dtype=int)
+        indexs = indexs[:, SortList.DataIndex]
         distances = [item[SortList.ValueIndex] for item in retList]
         datas = self.datas[indexs].tolist()
         return datas, distances
