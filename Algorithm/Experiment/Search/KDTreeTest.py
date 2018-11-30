@@ -8,7 +8,7 @@ import numpy as np
 LoadPah = GLOCT.SUPPORT_PATH + "Algorithm/Pickle/Test/"
 fileName = "test_KDTree"
 # test
-arrSize = (999999, 5)
+arrSize = (999999, 10)
 target = (np.random.random((1, arrSize[1])).tolist())[-1]
 
 performance = True
@@ -50,44 +50,48 @@ print('搜索数量', searchCount)
 
 # KDTree方法
 def test_KDTree():
-    datas, distrance = kdTree.Search(target, searchModel=KDTree.COUNTS_TYPE, searchCount=searchCount, magnification=0.1)
+    target = (np.random.random((1, arrSize[1])).tolist())[-1]
+    datas, distrance = kdTree.Search(target, searchModel=KDTree.MIN_TYPE,sortListType=SortList.INTERPOLATIONSEARCH, searchCount=searchCount, magnification=0.15)
     return datas, distrance
 
 
 # 数组遍历方法
 def test_Array():
+    target = (np.random.random((1, arrSize[1])).tolist())[-1]
     sortList = SortList(getValFunc=calculateDistant, cntsLimit=searchCount, searchType=SortList.INTERPOLATIONSEARCH)
     for item in array:
         sortList.put(item)
     return sortList.getAllList()
 
 
-print('________________________________')
-print('测试坐标', target)
 
-print('测试KD树')
-MPoint.setPoint()
-datas, val = test_KDTree()
-MPoint.showPoint()
-
-print('测试顺序查找')
-MPoint.setPoint()
-valArr = test_Array()
-MPoint.showPoint()
-
-if valArr:
-    print('正在对比')
-    flag = True
-    for i in range(len(val)):
-        if val[i] != valArr[i][-1]:
-            print('错误:', i, 'KDTree', val, 'Array:', valArr)
-            flag = False
-        break
-    if flag:
-        print('无错误,最小值:', val[0], '坐标', datas[0])
+# print('________________________________')
+# print('测试坐标', target)
 #
-# timeM = TimeM(test_KDTree)
-# timeM.StartTimeMeasure(1)
+# print('测试KD树')
+# MPoint.setPoint()
+# datas, val = test_KDTree()
+# MPoint.showPoint()
 #
-# timeM = TimeM(test_Array)
-# timeM.StartTimeMeasure(1)
+# print('测试顺序查找')
+# MPoint.setPoint()
+# valArr = test_Array()
+# MPoint.showPoint()
+#
+# if valArr:
+#     print('正在对比')
+#     flag = True
+#     for i in range(len(val)):
+#         if val[i] != valArr[i][-1]:
+#             print('错误:', i, 'KDTree', val, 'Array:', valArr)
+#             flag = False
+#         break
+#     if flag:
+#         print('无错误,最小值:', val[0], '坐标', datas[0])
+
+timeM = TimeM(test_KDTree)
+timeM.StartTimeMeasure(100)
+
+
+timeM = TimeM(test_Array)
+timeM.StartTimeMeasure(20)

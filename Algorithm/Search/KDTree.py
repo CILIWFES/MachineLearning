@@ -97,7 +97,7 @@ class KDSearch:
                 list_Len = len(allList)
         self.searchModel = KDSearch.COUNTS_TYPE
         self.searchDistance = None
-        print('邻近搜索次数:', int(magnTemp / self.magnification), '次')
+        # print('邻近搜索次数:', int(magnTemp / self.magnification), '次')
         return self.sortList.getAllList()[0:self.searchCount]
 
     # 计算递增放大倍数
